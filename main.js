@@ -2,6 +2,7 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import session from 'express-session';
 import categoryModel from './models/category.model.js'; 
+import courseModel from './models/course.model.js';
 import path from 'path'; 
 
 const __dirname = import.meta.dirname;
@@ -72,8 +73,26 @@ app.use(async function(req, res, next) {
 //app.use('/products', productRouter);
 
 
-app.get('/', function(req, res) {
-    res.render('index', { title: 'Online Academy' });
+app.get('/',async function(req, res) {
+    const [topViewed, newest, popularTopics] = await Promise.all([
+        courseModel.findTopViewed(),
+        courseModel.findTopNewest(),
+        categoryModel.findTopRegistered()
+    ]);
+
+    const featured = topViewed.slice(0, 4);
+
+    const vm = {
+        title: 'Online Academy',
+        isAuthenticated: req.session.isAuthenticated,
+        authUser: req.session.authUser,
+        
+        topViewed,
+        newest,
+        featured, 
+        popularTopics
+    };
+    res.render('index', vm);
 });
 
 

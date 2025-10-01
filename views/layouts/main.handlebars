@@ -29,13 +29,14 @@
                                 </svg>
                             </button>
                             
-                            <ul id="category-dropdown-menu" class="hidden absolute top-full left-0 mt-2 w-56 bg-white rounded-md shadow-2xl py-1 z-20">
+                            <ul id="category-dropdown-menu" class="hidden absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl py-1 border border-gray-100 z-20">
                                 {{#each global_categories}}
                                     {{#if (eq this.parent_id null)}}
+                                        {{! --- LEVEL 1 (MAIN) CATEGORY --- }}
                                         <li>
-                                            <a href="/products/byCat?id={{this.id}}" 
-                                                class="block px-4 py-2 text-base font-bold text-indigo-700 hover:bg-gray-100 transition-colors
-                                                       {{#if (eq this.id ../current_category.id)}} bg-indigo-50 text-indigo-900{{/if}}">
+                                            <a href="/products/list?catid={{this.id}}" 
+                                                class="block px-4 py-2 text-base font-extrabold text-indigo-700 transition-colors
+                                                    {{#if (eq this.id ../current_category.id)}} bg-indigo-50 text-indigo-900 border-l-4 border-indigo-500{{else}} hover:bg-gray-50{{/if}}">
                                                 {{this.name}}
                                             </a>
                                         </li>
@@ -44,10 +45,10 @@
                                         {{#each ../global_categories}}
                                             {{#if (eq this.parent_id ../this.id)}}
                                                 <li>
-                                                    <a href="/products/byCat?id={{this.id}}" 
+                                                    <a href="/products/list?catid={{this.id}}" 
                                                         class="block px-6 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors
-                                                               {{#if (eq this.id ../../current_category.id)}} bg-indigo-50 text-indigo-900 font-semibold{{/if}}">
-                                                        &mdash; {{this.name}}
+                                                            {{#if (eq this.id ../../current_category.id)}} bg-gray-100 text-indigo-600 font-semibold border-l-4 border-indigo-500{{/if}}">
+                                                        &bull; {{this.name}}
                                                     </a>
                                                 </li>
                                             {{/if}}
