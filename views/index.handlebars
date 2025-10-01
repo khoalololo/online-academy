@@ -2,14 +2,45 @@
     <div class="space-y-12">
         
         <section class="bg-white p-8 md:p-12 rounded-xl shadow-2xl border border-gray-100">
-            </section>
+            <div class="text-center">
+                {{#if isAuthenticated}}
+                    <p class="text-sm font-semibold text-green-600 uppercase tracking-widest mb-2">Welcome Back to the Academy!</p>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+                        Hello, <span class="text-indigo-600">{{authUser.name}}</span>! 👋
+                    </h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                        Your learning journey continues. Jump back into your enrolled courses or browse new topics.
+                    </p>
+                    <div class="mt-6 flex justify-center space-x-4">
+                        <a href="/student/enrolled" class="inline-block px-8 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition-transform transform hover:scale-105">
+                            My Courses
+                        </a>
+                        <a href="/products" class="inline-block px-8 py-3 border border-indigo-600 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition-colors">
+                            Browse All
+                        </a>
+                    </div>
+                {{else}}
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-indigo-700 leading-tight">
+                        Online Academy
+                    </h1>
+                    <p class="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
+                        Learn the skills you need for tomorrow. Start your journey today!
+                    </p>
+                    <div class="mt-6 flex justify-center space-x-4">
+                        <a href="/account/signup" class="inline-block px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                            Sign Up & Start Learning
+                        </a>
+                    </div>
+                {{/if}}
+            </div>
+        </section>
 
         <hr class="border-gray-200">
 
         <section class="space-y-6">
             <h2 class="text-3xl font-extrabold text-indigo-700">🏆 Weekly Highlights</h2>
             <p class="text-gray-600">The top 4 most popular courses registered this week. Don't miss out!</p>
-            
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {{#each featured}}
                 <a href="/products/{{this.proid}}" class="group block bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-yellow-300">
@@ -31,7 +62,7 @@
         <section class="space-y-6">
             <h2 class="text-3xl font-extrabold text-indigo-700">🔥 Most Viewed Courses</h2>
             
-            <div class="flex space-x-6 overflow-x-auto pb-4 custom-scrollbar">
+            <div id="most-viewed-carousel" class="flex space-x-6 overflow-x-auto pb-4 grab-scroll-container custom-scrollbar w-full">
                 {{#each topViewed}}
                 <a href="/products/{{this.proid}}" class="flex-shrink-0 w-72 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
                     <img class="w-full h-36 object-cover rounded-t-xl" src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}">
@@ -49,8 +80,8 @@
 
         <section class="space-y-6">
             <h2 class="text-3xl font-extrabold text-indigo-700">✨ New Arrivals</h2>
-            
-            <div class="flex space-x-6 overflow-x-auto pb-4 custom-scrollbar">
+
+            <div id="new-arrivals-carousel" class="flex space-x-6 overflow-x-auto pb-4 grab-scroll-container custom-scrollbar w-full">
                 {{#each newest}}
                 <a href="/products/{{this.proid}}" class="flex-shrink-0 w-72 bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300">
                     <img class="w-full h-36 object-cover rounded-t-xl" src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}">
