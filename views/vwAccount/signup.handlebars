@@ -1,0 +1,111 @@
+<h5 class="p-4 bg-gray-200 font-semibold rounded-t-md">Account Registration</h5>
+<div class="p-6">
+    {{#if error_message}}
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+        <span class="block sm:inline">{{error_message}}</span>
+    </div>
+    {{/if}}
+
+    <form class="space-y-6" method="post" action="/account/signup" id="accountRegister">
+        <div class="space-y-6">
+            <h3 class="text-lg font-bold text-gray-900">Account Information</h3>
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <div class="mt-1">
+                    <input id="username" name="username" type="text" autocomplete="username" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <div class="mt-1">
+                    <input id="password" name="password" type="password" autocomplete="new-password" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                <div class="mt-1">
+                    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6 border-t pt-6">
+            <h3 class="text-lg font-bold text-gray-900">Personal Information</h3>
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <div class="mt-1">
+                    <input id="name" name="name" type="text" autocomplete="name" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email address</label>
+                <div class="mt-1">
+                    <input id="email" name="email" type="email" autocomplete="email" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+                <p class="mt-1 block text-xs font-light text-gray-700"> We won't share your email with anyone else </p>
+            </div>
+            <div>
+                <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                <div class="mt-1">
+                    <input id="dob" name="dob" type="date" required class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+        <div>
+            <button type="submit" class="w-full inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 mr-2">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+                Register
+            </button>
+        </div>
+    </form>
+</div>
+
+{{#section 'js'}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.querySelector('#accountRegister').addEventListener('submit', handleSubmit);
+
+    function handleSubmit(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const username = form.querySelector('#username').value.trim();
+        const password = form.querySelector('#password').value;
+        const confirm = form.querySelector('#confirmPassword').value;
+
+        if (!username) {
+            return Swal.fire({ title: 'Error!', text: 'Username is required.', icon: 'error' });
+        }
+        if (password.length < 6) {
+            return Swal.fire({ title: 'Error!', text: 'Password must be at least 6 characters long.', icon: 'error' });
+        }
+        if (password !== confirm) {
+            return Swal.fire({ title: 'Error!', text: 'Passwords do not match.', icon: 'error' });
+        }
+
+        fetch(`/account/is-available?username=${encodeURIComponent(username)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.isAvailable) {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Username is already taken.',
+                        icon: 'error'
+                    });
+                } else {
+                    form.submit();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Could not check username availability.',
+                    icon: 'error'
+                });
+            });
+    }
+</script>
+{{/section}}

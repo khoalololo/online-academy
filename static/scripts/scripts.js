@@ -5,21 +5,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryDropdownToggle = document.getElementById('category-dropdown-toggle');
     const categoryDropdownMenu = document.getElementById('category-dropdown-menu');
     const categoryDropdownArrow = document.getElementById('category-dropdown-arrow');
-    if (categoryDropdownToggle && categoryDropdownMenu) {
+    if (categoryDropdownToggle && categoryDropdownMenu && categoryDropdownArrow) {
         categoryDropdownToggle.addEventListener('click', (e) => {
             e.preventDefault();            
-            categoryDropdownMenu.classList.toggle('hidden');            
-            if (categoryDropdownArrow) {
-                categoryDropdownArrow.classList.toggle('rotate-180');
-            }
+            categoryDropdownMenu.classList.toggle('hidden');
+            categoryDropdownArrow.classList.toggle('rotate-180');
         });
         document.addEventListener('click', (e) => {
             if (!categoryDropdownToggle.contains(e.target) && !categoryDropdownMenu.contains(e.target)) {
                 categoryDropdownMenu.classList.add('hidden');
-                if (categoryDropdownArrow) {
-                     categoryDropdownArrow.classList.remove('rotate-180');
-                }
+                categoryDropdownArrow.classList.remove('rotate-180');
             }
+        });
+    }
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const navbarSupportedContent = document.getElementById('navbarSupportedContent');
+
+    if (mobileMenuButton && navbarSupportedContent) {
+        mobileMenuButton.addEventListener('click', () => {
+            navbarSupportedContent.classList.toggle('hidden');
         });
     }
 

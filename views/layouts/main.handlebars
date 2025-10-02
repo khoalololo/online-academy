@@ -85,7 +85,7 @@
                                 </svg>
                             </button>
                             
-                            <ul id="category-dropdown-menu" class="hidden absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl py-1 border border-gray-100 z-20">
+                            <ul id="category-dropdown-menu" class="hidden absolute top-full left-0 mt-4 w-72 bg-white rounded-xl shadow-2xl py-1 border border-gray-100 z-20">
                                 {{#each global_categories}}
                                     {{#if (eq this.parent_id null)}}
                                         {{! --- LEVEL 1 (MAIN) CATEGORY --- }}
@@ -98,7 +98,7 @@
                                         </li>
                                         
                                         {{! --- Nested Loop for Level 2 Subcategories --- }}
-                                        {{#each ../global_categories}}
+                                        {{#each this.subcategories}}
                                             {{#if (eq this.parent_id ../this.id)}}
                                                 <li>
                                                     <a href="/products/list?catid={{this.id}}" 
@@ -165,6 +165,7 @@
     </div>
     
     <script src="/static/scripts/scripts.js" defer></script>
-    
+    {{{_sections.js}}}
+
 </body>
 </html>

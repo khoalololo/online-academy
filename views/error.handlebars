@@ -1,0 +1,11 @@
+&lt;div class="min-h-[50vh] flex items-center justify-center">
+    &lt;div class="text-center">
+        &lt;h1 class="text-4xl font-bold text-gray-800 mb-4">{{message}}&lt;/h1>
+        {{#if error}}
+            &lt;p class="text-gray-600">Error {{error.status}}&lt;/p>
+        {{/if}}
+        &lt;a href="/" class="mt-6 inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+            Return Home
+        &lt;/a>
+    &lt;/div>
+&lt;/div>
