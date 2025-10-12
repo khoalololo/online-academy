@@ -1,29 +1,23 @@
-// scripts.js (Add this to the existing file)
-
 document.addEventListener('DOMContentLoaded', () => {
     // CATEGORY DROPDOWN LOGIC
     const categoryDropdownToggle = document.getElementById('category-dropdown-toggle');
     const categoryDropdownMenu = document.getElementById('category-dropdown-menu');
     const categoryDropdownArrow = document.getElementById('category-dropdown-arrow');
-    if (categoryDropdownToggle && categoryDropdownMenu && categoryDropdownArrow) {
+    if (categoryDropdownToggle && categoryDropdownMenu) {
         categoryDropdownToggle.addEventListener('click', (e) => {
             e.preventDefault();            
-            categoryDropdownMenu.classList.toggle('hidden');
-            categoryDropdownArrow.classList.toggle('rotate-180');
+            categoryDropdownMenu.classList.toggle('hidden');            
+            if (categoryDropdownArrow) {
+                categoryDropdownArrow.classList.toggle('rotate-180');
+            }
         });
         document.addEventListener('click', (e) => {
             if (!categoryDropdownToggle.contains(e.target) && !categoryDropdownMenu.contains(e.target)) {
                 categoryDropdownMenu.classList.add('hidden');
-                categoryDropdownArrow.classList.remove('rotate-180');
+                if (categoryDropdownArrow) {
+                     categoryDropdownArrow.classList.remove('rotate-180');
+                }
             }
-        });
-    }
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const navbarSupportedContent = document.getElementById('navbarSupportedContent');
-
-    if (mobileMenuButton && navbarSupportedContent) {
-        mobileMenuButton.addEventListener('click', () => {
-            navbarSupportedContent.classList.toggle('hidden');
         });
     }
 
