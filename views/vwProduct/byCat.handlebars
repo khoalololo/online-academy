@@ -1,0 +1,82 @@
+<main class="container mx-auto px-4 py-8 md:py-12 max-w-7xl w-full">
+    <div class="space-y-8">
+        
+        <section class="text-center bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+            <h1 class="text-4xl font-extrabold text-indigo-700">
+                {{categoryName}}
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Browse through our collection of courses in this category.
+            </p>
+        </section>
+
+        {{#if courses.length}}
+        <section class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {{#each courses}}
+                <a href="/products/{{this.proid}}" class="group block bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
+                    <div class="h-40 bg-gray-100 flex items-center justify-center p-4">
+                        <img src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-full object-cover rounded-t-xl">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-xl font-bold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">{{this.proname}}</h3>
+                        <p class="text-sm text-gray-500 mt-1">By {{this.instructor_name}}</p>
+                        
+                        <div class="flex items-center mt-3">
+                            <div class="flex items-center">
+                                {{{stars this.average_rating}}}
+                            </div>
+                            <span class="ml-2 text-sm text-gray-600">({{this.rating_count}} reviews)</span>
+                        </div>
+
+                        <div class="mt-4 flex items-baseline justify-between">
+                            {{#if this.promo_price}}
+                                <div>
+                                    <span class="text-2xl font-extrabold text-red-600">${{formatNumber this.promo_price}}</span>
+                                    <span class="ml-2 text-gray-500 line-through">${{formatNumber this.price}}</span>
+                                </div>
+                            {{else}}
+                                <span class="text-2xl font-extrabold text-green-600">${{formatNumber this.price}}</span>
+                            {{/if}}
+                        </div>
+                    </div>
+                </a>
+                {{/each}}
+            </div>
+        </section>
+
+        <section class="flex justify-center pt-8">
+            <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {{#if pagination.prevPage}}
+                <a href="?catid={{catId}}&page={{pagination.prevPage}}" class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Previous
+                </a>
+                {{/if}}
+
+                {{#each pagination.pageNumbers}}
+                    {{#if this.isCurrent}}
+                    <span aria-current="page" class="relative z-10 inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                        {{this.value}}
+                    </span>
+                    {{else}}
+                    <a href="?catid={{../catId}}&page={{this.value}}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        {{this.value}}
+                    </a>
+                    {{/if}}
+                {{/each}}
+
+                {{#if pagination.nextPage}}
+                <a href="?catid={{catId}}&page={{pagination.nextPage}}" class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    Next
+                </a>
+                {{/if}}
+            </nav>
+        </section>
+        {{else}}
+        <section class="text-center py-16">
+            <p class="text-xl text-gray-500">No courses found in this category.</p>
+        </section>
+        {{/if}}
+
+    </div>
+</main>

@@ -26,31 +26,49 @@ export default {
             .first();
     },
 
-    async findByCategory(catid, page = 1, limit = 10) {
+    async findByCategory(categoryIds, page = 1, limit = 6) {
         const offset = (page - 1) * limit;
+
+        const ratingsSubquery = db('reviews')
+            .select('proid')
+            .avg('rating as avg_rating')
+            .count('id as rating_count')
+            .groupBy('proid')
+            .as('ratings');
         
         const courses = await db('courses as c')
-            .join('categories as cat', 'c.catid', 'cat.id')
-            .join('users as u', 'c.instructor_id', 'u.id')
-            .where('c.catid', catid)
-            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views', 
-                    'cat.name as category_name', 'u.name as instructor_name')
-            .orderBy('c.last_updated', 'desc')
-            .limit(limit)
-            .offset(offset);
+        .join('categories as cat', 'c.catid', 'cat.id')
+        .join('users as u', 'c.instructor_id', 'u.id')
+        .leftJoin(ratingsSubquery, 'c.proid', 'ratings.proid') // Use LEFT JOIN in case a course has no reviews
+        .whereIn('c.catid', categoryIds)
+        .select(
+            'c.proid',
+            'c.proname',
+            'c.tinydes',
+            'c.price',
+            'c.promo_price',
+            'cat.name as category_name',
+            'u.name as instructor_name',
+            // Use COALESCE to return 0 instead of null if there are no ratings
+            db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+            db.raw('COALESCE(ratings.rating_count, 0) as rating_count')
+        )
+        .orderBy('c.last_updated', 'desc')
+        .limit(limit)
+        .offset(offset);
 
-        const [{ count }] = await db('courses').where('catid', catid).count('proid as count');
+    const [{ count }] = await db('courses').whereIn('catid', categoryIds).count('proid as count');
+    const totalPages = Math.ceil(parseInt(count) / limit);
 
         return {
-            data: courses,
-            pagination: {
+        courses,
+        pagination: 
+            {
                 page,
                 limit,
                 total: parseInt(count),
-                totalPages: Math.ceil(parseInt(count) / limit)
+                totalPages,
             }
         };
-    },
-
-    
+    }   
 };

@@ -10,8 +10,7 @@ import courseModel from './models/course.model.js';
 
 // --- Route Imports ---
 import accountRouter from './routes/account.route.js';
-// Make sure you have created this file:
-// import productRouter from './routes/product.route.js'; 
+import productRouter from './routes/product.route.js'; 
 // import adminRouter from './routes/admin.route.js'; // For future use
 
 const __dirname = import.meta.dirname;
@@ -35,7 +34,7 @@ app.engine('handlebars', engine({
   layoutsDir: path.join(__dirname, 'views/layouts'),
   partialsDir: path.join(__dirname, 'views/partials'),
   helpers: {
-    section: sections(), // ✨ Register the section helper
+    section: sections(), // Register the section helper
     formatNumber(value) {
       if (typeof value === 'number') {
         return new Intl.NumberFormat('en-US').format(value);
@@ -44,6 +43,18 @@ app.engine('handlebars', engine({
     },
     // Add other helpers if needed
     eq: (a, b) => a === b,
+    stars(rating) {
+      let html = '';
+        const roundedRating = Math.round(rating * 2) / 2; // Round to nearest 0.5
+        for (let i = 1; i <= 5; i++) {
+            if (i <= roundedRating) {
+                html += '<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.955a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.955c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.54-1.118l1.287-3.955a1 1 0 00-.364-1.118L2.05 9.382c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z"></path></svg>';
+            } else {
+                html += '<svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.955a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.955c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.54-1.118l1.287-3.955a1 1 0 00-.364-1.118L2.05 9.382c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z"></path></svg>';
+            }
+        }
+        return html;
+    }
   }
 }));
 app.set('view engine', 'handlebars');
@@ -71,7 +82,7 @@ app.use(async function(req, res, next) {
 
 // --- Route Registration ---
 app.use('/account', accountRouter);
-//app.use('/products', productRouter);
+app.use('/products', productRouter);
 // app.use('/admin', adminRouter); // For future use
 
 // --- Homepage Route ---
@@ -111,5 +122,5 @@ app.use(function(err, req, res, next) {
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function() {
-  console.log(`🚀 Server is running at http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });
