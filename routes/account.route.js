@@ -38,10 +38,7 @@ router.post('/signin', async (req, res) => {
 
 // [GET] /account/signup
 router.get('/signup', (req, res) => {
-  res.render('vwAccount/signup', { 
-    layout: 'main',
-    title: 'Sign Up - Online Academy'
-  });
+  res.render('vwAccount/signup');
 });
 
 // [POST] /account/signup
