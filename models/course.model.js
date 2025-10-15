@@ -1,13 +1,50 @@
 import db from '../ultis/db.js';
 
+/**
+ * Creates a base query for fetching courses with joins and ratings.
+ * This is a private helper function to reduce code duplication.
+ * @returns {import('knex').Knex.QueryBuilder}
+ */
+function _getBaseQuery() {
+    const ratingSubquery = db('reviews')
+        .select('proid')
+        .avg('rating as average_rating')
+        .count('rating as rating_count')
+        .groupBy('proid')
+        .as('ratings');
+
+    return db('courses as c')
+        .join('categories as cat', 'c.catid', 'cat.id')
+        .join('users as u', 'c.instructor_id', 'u.id')
+        .leftJoin(ratingSubquery, 'c.proid', 'ratings.proid');
+}
+
 export default {
     async findTopViewed() {
-        return await db('courses')
-        .orderBy('views', 'desc').limit(10).select('proid', 'proname', 'tinydes', 'price', 'promo_price', 'views', 'catid');
+        const courses = await _getBaseQuery()
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+                'cat.name as category_name', 'u.name as instructor_name',
+                'ratings.average_rating', 'ratings.rating_count')
+            .orderBy('c.views', 'desc')
+            .limit(10);
+
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+        });
+        return courses;
     },
     async findTopNewest() {
-        return await db('courses')
-        .orderBy('last_updated', 'desc').limit(10).select('proid', 'proname', 'tinydes', 'price', 'promo_price', 'views', 'catid');
+        const courses = await _getBaseQuery()
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+                'cat.name as category_name', 'u.name as instructor_name',
+                'ratings.average_rating', 'ratings.rating_count')
+            .orderBy('c.last_updated', 'desc')
+            .limit(10);
+
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+        });
+        return courses;
     },
     async findById(proid) {
         return await db('courses as c')
@@ -26,49 +63,62 @@ export default {
             .first();
     },
 
-    async findByCategory(categoryIds, page = 1, limit = 6) {
+    async findAll(page = 1, limit = 10) {
         const offset = (page - 1) * limit;
-
-        const ratingsSubquery = db('reviews')
-            .select('proid')
-            .avg('rating as avg_rating')
-            .count('id as rating_count')
-            .groupBy('proid')
-            .as('ratings');
         
-        const courses = await db('courses as c')
-        .join('categories as cat', 'c.catid', 'cat.id')
-        .join('users as u', 'c.instructor_id', 'u.id')
-        .leftJoin(ratingsSubquery, 'c.proid', 'ratings.proid') // Use LEFT JOIN in case a course has no reviews
-        .whereIn('c.catid', categoryIds)
-        .select(
-            'c.proid',
-            'c.proname',
-            'c.tinydes',
-            'c.price',
-            'c.promo_price',
-            'cat.name as category_name',
-            'u.name as instructor_name',
-            // Use COALESCE to return 0 instead of null if there are no ratings
-            db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
-            db.raw('COALESCE(ratings.rating_count, 0) as rating_count')
-        )
-        .orderBy('c.last_updated', 'desc')
-        .limit(limit)
-        .offset(offset);
+        const courses = await _getBaseQuery()
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+                'cat.name as category_name', 'u.name as instructor_name',
+                'ratings.average_rating', 'ratings.rating_count')
+            .orderBy('c.last_updated', 'desc')
+            .limit(limit)
+            .offset(offset);
+        const [{ count }] = await db('courses').count('proid as count');
 
-    const [{ count }] = await db('courses').whereIn('catid', categoryIds).count('proid as count');
-    const totalPages = Math.ceil(parseInt(count) / limit);
+        // Ensure average_rating is a number, not a string from the DB.
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+        });
 
         return {
-        courses,
-        pagination: 
-            {
+            courses: courses,
+            pagination: {
                 page,
                 limit,
                 total: parseInt(count),
-                totalPages,
+                totalPages: Math.ceil(parseInt(count) / limit)
             }
         };
-    }   
+    },
+
+    async findByCategory(catid, page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        
+        const courses = await _getBaseQuery()
+            .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+                'cat.name as category_name', 'u.name as instructor_name',
+                'ratings.average_rating', 'ratings.rating_count')
+            .orderBy('c.last_updated', 'desc')
+            .limit(limit)
+            .offset(offset);
+        const [{ count }] = await db('courses').whereIn('catid', Array.isArray(catid) ? catid : [catid]).count('proid as count');
+
+        // Ensure average_rating is a number, not a string from the DB.
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+        });
+
+        return {
+            courses: courses,
+            pagination: {
+                page,
+                limit,
+                total: parseInt(count),
+                totalPages: Math.ceil(parseInt(count) / limit)
+            }
+        };
+    },
+
+    
 };

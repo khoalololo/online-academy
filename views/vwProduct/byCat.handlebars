@@ -1,6 +1,11 @@
 <main class="container mx-auto px-4 py-8 md:py-12 max-w-7xl w-full">
     <div class="space-y-8">
         
+        <!-- DEBUGGING: Uncomment the block below to see the raw data -->
+        <!-- <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code>
+            {{json this}}
+        </code></pre> -->
+        
         <section class="text-center bg-white p-8 rounded-xl shadow-lg border border-gray-100">
             <h1 class="text-4xl font-extrabold text-indigo-700">
                 {{categoryName}}
@@ -19,6 +24,9 @@
                         <img src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-full object-cover rounded-t-xl">
                     </div>
                     <div class="p-5">
+                        <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold mb-2 px-2.5 py-0.5 rounded-full">
+                            {{this.category_name}}
+                        </span>
                         <h3 class="text-xl font-bold text-gray-800 truncate group-hover:text-indigo-600 transition-colors">{{this.proname}}</h3>
                         <p class="text-sm text-gray-500 mt-1">By {{this.instructor_name}}</p>
                         
@@ -26,7 +34,7 @@
                             <div class="flex items-center">
                                 {{{stars this.average_rating}}}
                             </div>
-                            <span class="ml-2 text-sm text-gray-600">({{this.rating_count}} reviews)</span>
+                            <span class="ml-2 text-sm text-gray-600">({{formatNumber (or this.rating_count 0)}} reviews)</span>
                         </div>
 
                         <div class="mt-4 flex items-baseline justify-between">
@@ -46,31 +54,53 @@
         </section>
 
         <section class="flex justify-center pt-8">
-            <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                {{#if pagination.prevPage}}
-                <a href="?catid={{catId}}&page={{pagination.prevPage}}" class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Previous
-                </a>
-                {{/if}}
-
-                {{#each pagination.pageNumbers}}
-                    {{#if this.isCurrent}}
-                    <span aria-current="page" class="relative z-10 inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
-                        {{this.value}}
-                    </span>
-                    {{else}}
-                    <a href="?catid={{../catId}}&page={{this.value}}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        {{this.value}}
-                    </a>
-                    {{/if}}
-                {{/each}}
-
-                {{#if pagination.nextPage}}
-                <a href="?catid={{catId}}&page={{pagination.nextPage}}" class="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                    Next
-                </a>
-                {{/if}}
+            {{#if (gt pagination.totalPages 1)}}
+            <nav aria-label="Page navigation" class="mt-10 flex justify-center">
+                <ul class="inline-flex items-center space-x-2">
+                    <!-- Previous Button -->
+                    <li>
+                        <a 
+                            class="px-3 py-2 rounded-lg border text-md font-medium 
+                                {{#if (gt pagination.page 1)}}
+                                    text-indigo-700 bg-white hover:bg-gray-100 active:bg-gray-200 border-gray-300
+                                {{else}}
+                                    text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed
+                                {{/if}}"
+                            {{#if (gt pagination.page 1)}}href="{{#if catId}}?catid={{catId}}&page={{sub pagination.page 1}}{{else}}?page={{sub pagination.page 1}}{{/if}}"{{else}}href="#"{{/if}}>
+                            ‹ Prev
+                        </a>
+                    </li>
+                    <!-- Page Numbers -->
+                    {{#each pagination.pageNumbers}}
+                    <li>
+                        <a 
+                            class="px-3 py-2 rounded-lg border text-md font-medium 
+                                {{#if this.isCurrent}}
+                                    bg-indigo-600 text-white border-indigo-600
+                                {{else}}
+                                    text-indigo-700 bg-white hover:bg-gray-100 active:bg-gray-200 border-gray-300
+                                {{/if}}"
+                            {{#if this.isCurrent}}href="#" aria-current="page"{{else}}href="{{#if ../catId}}?catid={{../catId}}&page={{this.value}}{{else}}?page={{this.value}}{{/if}}"{{/if}}>
+                            {{this.value}}
+                        </a>
+                    </li>
+                    {{/each}}
+                    <!-- Next Button -->
+                    <li>
+                        <a 
+                            class="px-3 py-2 rounded-lg border text-md font-medium 
+                                {{#if (lt pagination.page pagination.totalPages)}}
+                                    text-indigo-700 bg-white hover:bg-gray-100 active:bg-gray-200 border-gray-300
+                                {{else}}
+                                    text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed
+                                {{/if}}"
+                            {{#if (lt pagination.page pagination.totalPages)}}href="{{#if catId}}?catid={{catId}}&page={{add pagination.page 1}}{{else}}?page={{add pagination.page 1}}{{/if}}"{{else}}href="#"{{/if}}>
+                            Next ›
+                        </a>
+                    </li>
+                </ul>
             </nav>
+            {{/if}}
         </section>
         {{else}}
         <section class="text-center py-16">
