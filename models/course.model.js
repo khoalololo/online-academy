@@ -120,5 +120,9 @@ export default {
         };
     },
 
-    
+    async incrementViews(proid) {
+        return await db('courses')
+            .where('proid', proid)
+            .increment('views', 1);
+    }
 };

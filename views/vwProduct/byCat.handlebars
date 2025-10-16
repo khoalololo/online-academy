@@ -1,11 +1,6 @@
 <main class="container mx-auto px-4 py-8 md:py-12 max-w-7xl w-full">
     <div class="space-y-8">
         
-        <!-- DEBUGGING: Uncomment the block below to see the raw data -->
-        <!-- <pre class="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto"><code>
-            {{json this}}
-        </code></pre> -->
-        
         <section class="text-center bg-white p-8 rounded-xl shadow-lg border border-gray-100">
             <h1 class="text-4xl font-extrabold text-indigo-700">
                 {{categoryName}}
@@ -20,7 +15,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {{#each courses}}
                 <a href="/products/{{this.proid}}" class="group block bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
-                    <div class="h-40 bg-gray-100 flex items-center justify-center p-4">
+                    <div class="h-40 flex items-center justify-center">
                         <img src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-full object-cover rounded-t-xl">
                     </div>
                     <div class="p-5">

@@ -10,7 +10,6 @@ import courseModel from './models/course.model.js';
 
 // --- Route Imports ---
 import accountRouter from './routes/account.route.js';
-// Make sure you have created this file:
 import productRouter from './routes/product.route.js'; 
 // import adminRouter from './routes/admin.route.js'; // For future use
 
@@ -23,19 +22,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/static', express.static('static'));
 app.use(session({
-  secret: 'your-secret-key', // Change this to a strong, random secret
+  secret: 'your-secret-key', 
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using HTTPS in production
+  cookie: { secure: false } 
 }));
 
-// --- Handlebars View Engine Setup ---
 app.engine('handlebars', engine({
   defaultLayout: 'main',
   layoutsDir: path.join(__dirname, 'views/layouts'),
   partialsDir: path.join(__dirname, 'views/partials'),
   helpers: {
-    section: sections(), // ✨ Register the section helper
+    section: sections(), 
     formatNumber(value) {
       if (typeof value === 'number') {
         return new Intl.NumberFormat('en-US').format(value);
@@ -44,7 +42,6 @@ app.engine('handlebars', engine({
     },
     stars(rating) {
       if (typeof rating !== 'number' || rating < 0) {
-        // Return 5 empty stars if the rating is not valid
         rating = 0;
       }
       let html = '';
@@ -81,6 +78,13 @@ app.engine('handlebars', engine({
     sub(a, b) {
       return a - b;
     },
+    div(a, b) {
+      return Math.floor(a / b);
+    },
+    mul(a, b) {
+      return a * b;
+    },
+    eq: (a, b) => a === b,
     raw(options) {
       return options.fn();
     },
@@ -92,8 +96,12 @@ app.engine('handlebars', engine({
       const svg = '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4-4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>';
       return new this.Handlebars.SafeString(svg);
     },
+    substring(str, start, end) {
+      if (!str) return '';
+      return str.substring(start, end).toUpperCase();
+    }
     // Add other helpers if needed
-    eq: (a, b) => a === b,
+    
   }
 }));
 app.set('view engine', 'handlebars');
@@ -122,7 +130,7 @@ app.use(async function(req, res, next) {
 // --- Route Registration ---
 app.use('/account', accountRouter);
 app.use('/products', productRouter);
-// app.use('/admin', adminRouter); // For future use
+//app.use('/admin', adminRouter); // For future use
 
 // --- Homepage Route ---
 app.get('/', async function(req, res) {
@@ -148,18 +156,16 @@ app.get('/', async function(req, res) {
   }
 });
 
-// --- Error Handling ---
 app.use(function(req, res) {
-  res.status(404).render('404', { layout: false });
+  res.status(404).render('error', { layout: false, error: { status: 404, message: 'Not Found' } });
 });
 
 app.use(function(err, req, res, next) {
   console.error(err.stack);
-  res.status(500).render('500', { layout: false });
+  res.status(500).render('error', { layout: false, error: { status: 500, message: 'Internal Server Error' } });
 });
 
-// --- Start Server ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function() {
-  console.log(`🚀 Server is running at http://localhost:${PORT}`);
+  console.log(`Server is running at http://localhost:${PORT}`);
 });

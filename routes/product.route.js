@@ -1,6 +1,10 @@
 import express from 'express';
 import courseModel from '../models/course.model.js';
 import categoryModel from '../models/category.model.js';
+import enrollmentModel from '../models/enrollment.model.js';
+import watchlistModel from '../models/watchlist.model.js';
+import reviewModel from '../models/review.model.js';
+import lessonModel from '../models/lesson.model.js';
 
 const router = express.Router();
 const COURSES_PER_PAGE = 6;
@@ -21,8 +25,6 @@ function generatePageNumbers(currentPage, totalPages) {
 router.get('/', async function (req, res) {
   try {
     const page = +req.query.page || 1;
-
-    // Fetch all courses since no category is specified
     const result = await courseModel.findAll(page, COURSES_PER_PAGE);
 
     const viewData = {
@@ -45,7 +47,6 @@ router.get('/byCat', async function (req, res) {
   try {
     const catId = +req.query.catid;
     if (!catId) {
-      // If catid is missing or invalid, redirect to the "All Courses" page.
       return res.redirect('/products');
     }
 
@@ -60,6 +61,7 @@ router.get('/byCat', async function (req, res) {
     const result = await courseModel.findByCategory(categoryIds, page, COURSES_PER_PAGE);
 
     const viewData = {
+      title: category.name,
       categoryName: category.name,
       courses: result.courses,
       pagination: {
@@ -72,6 +74,55 @@ router.get('/byCat', async function (req, res) {
     res.render('vwProduct/byCat', viewData);
   } catch (error) {
     console.error('Error fetching courses by category:', error);
+    res.status(500).render('500', { layout: false });
+  }
+});
+
+// [GET] /products/:proid
+router.get('/:proid', async function (req, res) {
+  try {
+    const proid = +req.params.proid;
+    if(isNaN(proid)) {
+      return res.status(404).render('404', { layout: false });
+    }
+    const course = await courseModel.findById(proid);
+    if (!course) {
+      return res.status(404).render('404', { layout: false });
+    }
+    // Increment view count
+    await courseModel.incrementViews(proid);
+    const relatedResult = await courseModel.findByCategory([course.catid], 1, 6);
+    const relatedCourses = relatedResult.courses.filter(c => c.proid !== proid).slice(0, 5); // Ensure only 4 related courses
+
+    //check if user is enrolled in course and if course is in user's watchlist
+    let isEnrolled = false;
+    let isInWatchlist = false;
+
+    if (req.session.isAuthenticated) {
+      const userId = req.session.authUser.id;
+      isEnrolled = await enrollmentModel.isEnrolled(userId, proid);
+      isInWatchlist = await watchlistModel.isInWatchlist(userId, proid);
+    }
+
+    // Get course rating and reviews
+    const rating = await reviewModel.getCourseRating(proid);
+    const ratingDistribution = await reviewModel.getRatingDistribution(proid);
+    const reviews = await reviewModel.getByCourse(proid);
+
+
+    res.render('vwProduct/detail', {
+      title: course.proname,
+      course,
+      relatedCourses,
+      isEnrolled,
+      isInWatchlist,
+      rating,
+      ratingDistribution,
+      reviews: reviews.data
+    });
+
+  } catch (error) {
+    console.error('Error fetching course details:', error);
     res.status(500).render('500', { layout: false });
   }
 });
