@@ -78,6 +78,62 @@ router.get('/byCat', async function (req, res) {
   }
 });
 
+router.get('/search', async function (req, res) {
+  try {
+    const page = +req.query.page || 1;
+    const limit = 6; // 6 courses per page
+    const searchQuery = req.query.q || '';
+    const catId = +req.query.catid || null;
+    const sortBy = req.query.sortBy || 'relevance';
+
+    // Call the model function with all parameters
+    const result = await courseModel.search(
+      searchQuery,
+      catId,
+      sortBy,
+      page,
+      limit
+    );
+
+    // Fetch categories for the filter dropdown
+    const allCategories = await categoryModel.getHierarchicalMenu();
+
+    // Prepare pagination
+    const pageNumbers = [];
+    if (result.pagination.totalPages > 1) {
+      for (let i = 1; i <= result.pagination.totalPages; i++) {
+        pageNumbers.push({
+          value: i,
+          isCurrent: i === page
+        });
+      }
+    }
+
+    // This object holds the current search state to pre-fill the form
+    const searchParams = {
+      q: searchQuery,
+      catid: catId,
+      sortBy: sortBy
+    };
+
+    res.render('vwProduct/search', {
+      title: `Search results for "${searchQuery}"`,
+      courses: result.courses,
+      allCategories,
+      searchParams, // Pass current params back to the view
+      pagination: {
+        ...result.pagination,
+        hasPrev: page > 1,
+        hasNext: page < result.pagination.totalPages,
+        pageNumbers
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching search results:', error);
+    res.status(500).render('500', { layout: false });
+  }
+});
+
 // [GET] /products/:proid
 router.get('/:proid', async function (req, res) {
   try {
@@ -142,62 +198,6 @@ router.get('/:proid', async function (req, res) {
 
   } catch (error) {
     console.error('Error fetching course details:', error);
-    res.status(500).render('500', { layout: false });
-  }
-});
-
-router.get('/search', async function (req, res) {
-  try {
-    const page = +req.query.page || 1;
-    const limit = 6; // 6 courses per page
-    const searchQuery = req.query.q || '';
-    const catId = +req.query.catid || null;
-    const sortBy = req.query.sortBy || 'relevance';
-
-    // Call the model function with all parameters
-    const result = await courseModel.search(
-      searchQuery,
-      catId,
-      sortBy,
-      page,
-      limit
-    );
-
-    // Fetch categories for the filter dropdown
-    const allCategories = await categoryModel.getHierarchicalMenu();
-
-    // Prepare pagination
-    const pageNumbers = [];
-    if (result.pagination.totalPages > 1) {
-      for (let i = 1; i <= result.pagination.totalPages; i++) {
-        pageNumbers.push({
-          value: i,
-          isCurrent: i === page
-        });
-      }
-    }
-
-    // This object holds the current search state to pre-fill the form
-    const searchParams = {
-      q: searchQuery,
-      catid: catId,
-      sortBy: sortBy
-    };
-
-    res.render('vwProducts/search', {
-      title: `Search results for "${searchQuery}"`,
-      courses: result.courses,
-      allCategories,
-      searchParams, // Pass current params back to the view
-      pagination: {
-        ...result.pagination,
-        hasPrev: page > 1,
-        hasNext: page < result.pagination.totalPages,
-        pageNumbers
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching search results:', error);
     res.status(500).render('500', { layout: false });
   }
 });

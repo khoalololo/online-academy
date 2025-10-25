@@ -108,6 +108,12 @@ app.engine('handlebars', engine({
       const query = new URLSearchParams(params);
       query.set(newKey, newValue);
       return query.toString();
+    },
+    toFixed(value, decimals) {
+      if (typeof value === 'number') {
+        return value.toFixed(decimals);
+      }
+      return value;
     }
     // Add other helpers if needed
     
