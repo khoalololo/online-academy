@@ -99,7 +99,11 @@ app.engine('handlebars', engine({
     substring(str, start, end) {
       if (!str) return '';
       return str.substring(start, end).toUpperCase();
-    }
+    },
+    percentage(original, promo) {
+      if (!promo || promo >= original) return 0;
+      return Math.round(((original - promo) / original) * 100);
+  }
     // Add other helpers if needed
     
   }

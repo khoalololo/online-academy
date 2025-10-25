@@ -1,0 +1,76 @@
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Search Results for "{{query}}"</h1>
+
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-4">
+            <label for="sortBy" class="text-gray-600">Sort by:</label>
+            <select id="sortBy" name="sortBy" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
+                <option value="/products/search?q={{query}}&sortBy=relevance" {{#if (eq sortBy 'relevance')}}selected{{/if}}>Relevance</option>
+                <option value="/products/search?q={{query}}&sortBy=newest" {{#if (eq sortBy 'newest')}}selected{{/if}}>Newest</option>
+                <option value="/products/search?q={{query}}&sortBy=popular" {{#if (eq sortBy 'popular')}}selected{{/if}}>Popular</option>
+                <option value="/products/search?q={{query}}&sortBy=rating" {{#if (eq sortBy 'rating')}}selected{{/if}}>Rating</option>
+                <option value="/products/search?q={{query}}&sortBy=price_asc" {{#if (eq sortBy 'price_asc')}}selected{{/if}}>Price: Low to High</option>
+                <option value="/products/search?q={{query}}&sortBy=price_desc" {{#if (eq sortBy 'price_desc')}}selected{{/if}}>Price: High to Low</option>
+            </select>
+        </div>
+        <div class="flex items-center space-x-4">
+            <label for="category" class="text-gray-600">Category:</label>
+            <select id="category" name="catid" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
+                <option value="/products/search?q={{query}}&sortBy={{sortBy}}">All Categories</option>
+                {{#each categories}}
+                <option value="/products/search?q={{../query}}&sortBy={{../sortBy}}&catid={{this.id}}" {{#if (eq this.id ../catid)}}selected{{/if}}>{{this.name}}</option>
+                {{/each}}
+            </select>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {{#each courses}}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
+            <a href="/products/{{this.proid}}">
+                <img src="/static/images/courses/{{this.proid}}.jpg" alt="{{this.proname}}" class="w-full h-48 object-cover">
+            </a>
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-xs text-gray-500">{{this.category_name}}</div>
+                    <div>
+                        {{#if this.isBestseller}}
+                        <span class="bg-yellow-400 text-white text-xs font-semibold px-2 py-1 rounded-full">Bestseller</span>
+                        {{/if}}
+                        {{#if this.isNew}}
+                        <span class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full">New</span>
+                        {{/if}}
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 truncate">{{this.proname}}</h3>
+                <p class="text-gray-600 text-sm mb-4 h-16 overflow-hidden">{{this.tinydes}}</p>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="text-yellow-500 font-bold">{{#if this.average_rating}}{{this.average_rating}}{{else}}N/A{{/if}}</div>
+                        <div class="text-gray-500 ml-2">({{this.rating_count}})</div>
+                    </div>
+                    <div class="text-xl font-bold text-indigo-600">${{this.price}}</div>
+                </div>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+
+    {{#if pagination.totalPages}}
+    <div class="flex justify-center mt-8">
+        <nav class="flex items-center space-x-2">
+            {{#if pagination.prev_page}}
+            <a href="/products/search?q={{query}}&sortBy={{sortBy}}&catid={{catid}}&page={{pagination.prev_page}}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Previous</a>
+            {{/if}}
+            {{#each pagination.pageNumbers}}
+            <a href="/products/search?q={{../query}}&sortBy={{../sortBy}}&catid={{../catid}}&page={{this.value}}" class="px-4 py-2 border border-gray-300 rounded-md {{#if this.isCurrent}}bg-indigo-600 text-white{{else}}text-gray-700 hover:bg-gray-100{{/if}}">{{this.value}}</a>
+            {{/each}}
+            {{#if pagination.next_page}}
+            <a href="/products/search?q={{query}}&sortBy={{sortBy}}&catid={{catid}}&page={{pagination.next_page}}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Next</a>
+            {{/if}}
+        </nav>
+    </div>
+    {{/if}}
+</div>

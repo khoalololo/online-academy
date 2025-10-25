@@ -94,20 +94,34 @@ router.get('/:proid', async function (req, res) {
     const relatedResult = await courseModel.findByCategory([course.catid], 1, 6);
     const relatedCourses = relatedResult.courses.filter(c => c.proid !== proid).slice(0, 5); // Ensure only 4 related courses
 
-    //check if user is enrolled in course and if course is in user's watchlist
+    // Get enrollment count
+    const enrollmentModel = (await import('../models/enrollment.model.js')).default;
+    const db = (await import('../ultis/db.js')).default;
+    const [enrollmentCount] = await db('enrollment')
+      .where('proid', proid)
+      .count('user_id as count');
+
+    // Check if user is enrolled and if course is in watchlist
     let isEnrolled = false;
     let isInWatchlist = false;
+    let userReview = null;
 
     if (req.session.isAuthenticated) {
       const userId = req.session.authUser.id;
       isEnrolled = await enrollmentModel.isEnrolled(userId, proid);
       isInWatchlist = await watchlistModel.isInWatchlist(userId, proid);
+      userReview =  await reviewModel.getUserReview(userId, proid);
     }
 
     // Get course rating and reviews
     const rating = await reviewModel.getCourseRating(proid);
     const ratingDistribution = await reviewModel.getRatingDistribution(proid);
     const reviews = await reviewModel.getByCourse(proid);
+
+    //Get lessons for the course
+    const lessons = await lessonModel.getByCourse(proid);
+    const totalDuration = await lessonModel.getTotalDuration(proid);
+    const lessonCount = await lessonModel.getLessonCount(proid);
 
 
     res.render('vwProduct/detail', {
@@ -118,11 +132,71 @@ router.get('/:proid', async function (req, res) {
       isInWatchlist,
       rating,
       ratingDistribution,
-      reviews: reviews.data
+      reviews: reviews.data,
+      userReview,
+      lessons,
+      lessonCount,
+      totalDuration: Math.floor(totalDuration / 60), // Convert to minutes
+      studentCount: parseInt(enrollmentCount.count)
     });
 
   } catch (error) {
     console.error('Error fetching course details:', error);
+    res.status(500).render('500', { layout: false });
+  }
+});
+
+router.get('/search', async function (req, res) {
+  try {
+    const query = req.query.q || '';
+    const page = +req.query.page || 1;
+    const sortBy = req.query.sortBy || 'relevance'; // Default sort by relevance
+    const categoryId = +req.query.catid || null;
+
+    let coursesQuery = courseModel.search(query, categoryId);
+
+    // Apply sorting
+    switch (sortBy) {
+      case 'price_asc':
+        coursesQuery = coursesQuery.orderBy('c.price', 'asc');
+        break;
+      case 'price_desc':
+        coursesQuery = coursesQuery.orderBy('c.price', 'desc');
+        break;
+      case 'rating':
+        coursesQuery = coursesQuery.orderBy('ratings.average_rating', 'desc');
+        break;
+      case 'newest':
+        coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+        break;
+      case 'popular': // Most enrolled
+        coursesQuery = coursesQuery
+          .leftJoin('enrollment as e', 'c.proid', 'e.proid')
+          .groupBy('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views', 'cat.name', 'u.name', 'ratings.average_rating', 'ratings.rating_count', 'c.last_updated') // Include all selected columns in GROUP BY
+          .select(db.raw('COUNT(e.user_id) as enrollment_count'))
+          .orderBy('enrollment_count', 'desc');
+        break;
+      case 'relevance':
+      default:
+        // Default sorting for relevance can be more complex, for now, let's use last_updated
+        coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+        break;
+    }
+
+    const result = await coursesQuery.paginate(page, COURSES_PER_PAGE);
+
+    const categories = await categoryModel.findAll();
+
+    res.render('vwProduct/search', {
+      title: `Search results for "${query}"`,
+      courses: result.courses,
+      pagination: {
+        ...result.pagination,
+        pageNumbers: generatePageNumbers(1, result.pagination.totalPages),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching search results:', error);
     res.status(500).render('500', { layout: false });
   }
 });

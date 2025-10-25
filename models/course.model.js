@@ -124,5 +124,84 @@ export default {
         return await db('courses')
             .where('proid', proid)
             .increment('views', 1);
+    },
+
+    async search(query, page = 1, limit = 10, sortBy = 'relevance', catid = null) {
+        const offset = (page - 1) * limit;
+
+        let coursesQuery = _getBaseQuery()
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+                'cat.name as category_name', 'u.name as instructor_name',
+                'ratings.average_rating', 'ratings.rating_count', 'c.last_updated')
+            .where(function () {
+                this.where('c.proname', 'like', `%${query}%`)
+                    .orWhere('c.fulldes', 'like', `%${query}%`);
+            });
+
+        if (catid) {
+            coursesQuery = coursesQuery.andWhere('c.catid', catid);
+        }
+
+        let countQuery = db('courses as c').where(function () {
+            this.where('c.proname', 'like', `%${query}%`)
+                .orWhere('c.fulldes', 'like', `%${query}%`);
+        });
+
+        if (catid) {
+            countQuery = countQuery.andWhere('c.catid', catid);
+        }
+
+        switch (sortBy) {
+            case 'price_asc':
+                coursesQuery = coursesQuery.orderBy('c.price', 'asc');
+                break;
+            case 'price_desc':
+                coursesQuery = coursesQuery.orderBy('c.price', 'desc');
+                break;
+            case 'rating':
+                coursesQuery = coursesQuery.orderBy('ratings.average_rating', 'desc');
+                break;
+            case 'newest':
+                coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+                break;
+            case 'popular':
+                coursesQuery = coursesQuery
+                    .leftJoin('enrollment as e', 'c.proid', 'e.proid')
+                    .groupBy('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views', 'cat.name', 'u.name', 'ratings.average_rating', 'ratings.rating_count', 'c.last_updated')
+                    .select(db.raw('COUNT(e.user_id) as enrollment_count'))
+                    .orderBy('enrollment_count', 'desc');
+                break;
+            case 'relevance':
+            default:
+                coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+                break;
+        }
+
+        const courses = await coursesQuery.limit(limit).offset(offset);
+        const [{ count }] = await countQuery.count('c.proid as count');
+
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+            // Add bestseller and new tags
+            const enrollmentCount = course.enrollment_count || 0;
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            if (enrollmentCount > 100) { // Define bestseller threshold
+                course.isBestseller = true;
+            }
+            if (new Date(course.last_updated) > thirtyDaysAgo) { // Define new threshold
+                course.isNew = true;
+            }
+        });
+
+        return {
+            courses: courses,
+            pagination: {
+                page,
+                limit,
+                total: parseInt(count),
+                totalPages: Math.ceil(parseInt(count) / limit)
+            }
+        };
     }
 };
