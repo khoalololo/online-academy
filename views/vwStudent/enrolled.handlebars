@@ -1,0 +1,51 @@
+<div class="max-w-7xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">My Enrolled Courses</h1>
+
+    {{#if courses.length}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {{#each courses}}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <a href="/student/learn/{{this.proid}}" class="block">
+                        <img src="https://picsum.photos/400/225?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-48 object-cover">
+                    </a>
+                    <div class="p-6">
+                        <div class="flex items-baseline">
+                            <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{{this.category_name}}</span>
+                        </div>
+                        <h4 class="mt-2 font-bold text-xl text-gray-900 leading-tight truncate">
+                            <a href="/student/learn/{{this.proid}}" class="hover:text-indigo-600">{{this.proname}}</a>
+                        </h4>
+                        <p class="mt-1 text-sm text-gray-600">By {{this.instructor_name}}</p>
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                                <span>Progress</span>
+                                <span>{{this.progress}}%</span>
+                            </div>
+                            <div class="bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{this.progress}}%"></div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                             <a href="/student/learn/{{this.proid}}" class="w-full block text-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                Go to Course
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    {{else}}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v1.586m-6.253 6.253H12m6.253-6.253v1.586m-1.586 6.253h-3.172a2.36 2.36 0 01-2.359-2.359V12m6.253 6.253V12m-6.253 6.253H12m-6.253-6.253v-3.172a2.36 2.36 0 012.359-2.359H12" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">You are not enrolled in any courses</h3>
+            <p class="mt-1 text-sm text-gray-500">Explore our courses and start learning today!</p>
+            <div class="mt-6">
+                <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Browse Courses
+                </a>
+            </div>
+        </div>
+    {{/if}}
+</div>
