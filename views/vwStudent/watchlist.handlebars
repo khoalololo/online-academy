@@ -1,0 +1,151 @@
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Watchlist</h1>
+        <p class="mt-2 text-gray-600">Courses you're interested in learning</p>
+    </div>
+
+    {{#if courses.length}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {{#each courses}}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
+                    <a href="/products/{{this.proid}}" class="block">
+                        <img src="https://picsum.photos/400/225?random={{this.proid}}" 
+                             alt="{{this.proname}}" 
+                             class="w-full h-48 object-cover">
+                    </a>
+                    
+                    <div class="p-6">
+                        <!-- Category Badge -->
+                        <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2">
+                            {{this.category_name}}
+                        </span>
+
+                        <!-- Course Title -->
+                        <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                            <a href="/products/{{this.proid}}" class="hover:text-indigo-600 transition-colors">
+                                {{this.proname}}
+                            </a>
+                        </h3>
+
+                        <!-- Instructor -->
+                        <p class="text-sm text-gray-600 mb-3">By {{this.instructor_name}}</p>
+
+                        <!-- Rating -->
+                        <div class="flex items-center mb-4">
+                            <div class="flex items-center">
+                                {{{stars this.average_rating}}}
+                            </div>
+                            <span class="ml-2 text-sm text-gray-600">
+                                {{toFixed this.average_rating 1}} ({{formatNumber this.rating_count}})
+                            </span>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                {{#if this.promo_price}}
+                                    <span class="text-2xl font-bold text-red-600">${{formatNumber this.promo_price}}</span>
+                                    <span class="ml-2 text-sm text-gray-500 line-through">${{formatNumber this.price}}</span>
+                                {{else}}
+                                    <span class="text-2xl font-bold text-gray-900">${{formatNumber this.price}}</span>
+                                {{/if}}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2">
+                            <a href="/products/{{this.proid}}" 
+                               class="flex-1 text-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                View Course
+                            </a>
+                            <button onclick="removeFromWatchlist({{this.proid}})" 
+                                    class="px-4 py-2 bg-red-100 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-200 transition-colors"
+                                    title="Remove from watchlist">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    {{else}}
+        <!-- Empty State -->
+        <div class="text-center py-16">
+            <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+            </svg>
+            <h3 class="mt-4 text-xl font-medium text-gray-900">Your watchlist is empty</h3>
+            <p class="mt-2 text-gray-500">Start adding courses you're interested in to your watchlist!</p>
+            <div class="mt-6">
+                <a href="/products" 
+                   class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Browse Courses
+                </a>
+            </div>
+        </div>
+    {{/if}}
+</div>
+
+{{#section 'js'}}
+<script>
+async function removeFromWatchlist(proid) {
+    // Show confirmation dialog
+    const result = await Swal.fire({
+        title: 'Remove from Watchlist?',
+        text: 'Are you sure you want to remove this course from your watchlist?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, remove it',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch('/student/watchlist/remove', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proid })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Removed!',
+                text: 'Course removed from your watchlist.',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Error!',
+                text: data.message || 'Failed to remove from watchlist.',
+                icon: 'error',
+                confirmButtonColor: '#4F46E5'
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: 'An error occurred. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+</script>
+{{/section}}

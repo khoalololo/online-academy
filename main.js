@@ -2,8 +2,7 @@ import express from 'express';
 import { engine } from 'express-handlebars';
 import session from 'express-session';
 import path from 'path';
-import sections from 'express-handlebars-sections'; // For section helpers
-
+import sections from 'express-handlebars-sections'; 
 // --- Model Imports ---
 import categoryModel from './models/category.model.js';
 import courseModel from './models/course.model.js';
@@ -11,6 +10,7 @@ import courseModel from './models/course.model.js';
 // --- Route Imports ---
 import accountRouter from './routes/account.route.js';
 import productRouter from './routes/product.route.js'; 
+import studentRouter from './routes/student.route.js';
 // import adminRouter from './routes/admin.route.js'; // For future use
 
 const __dirname = import.meta.dirname;
@@ -24,7 +24,7 @@ app.use('/static', express.static('static'));
 app.use(session({
   secret: 'your-secret-key', 
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
   cookie: { secure: false } 
 }));
 
@@ -110,11 +110,11 @@ app.engine('handlebars', engine({
       return query.toString();
     },
     toFixed(value, decimals) {
-      if (typeof value === 'number') {
-        return value.toFixed(decimals);
-      }
-      return value;
-    }
+        if (value === null || value === undefined) return '0.0';
+        const num = parseFloat(value);
+        if (isNaN(num)) return '0.0';
+        return num.toFixed(decimals || 1);
+    }    
     // Add other helpers if needed
     
   }
@@ -145,6 +145,7 @@ app.use(async function(req, res, next) {
 // --- Route Registration ---
 app.use('/account', accountRouter);
 app.use('/products', productRouter);
+app.use('/student', studentRouter);
 //app.use('/admin', adminRouter); // For future use
 
 // --- Homepage Route ---

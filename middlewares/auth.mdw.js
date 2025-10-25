@@ -10,15 +10,16 @@ export const PERMISSIONS ={
 export default {
   //middleware to check if user is authenticated
   isAuthenticated: (req, res, next) => {
-    if (req.session.user) {
+    if (req.session.isAuthenticated && req.session.authUser) {
       return next();  
     }
-    res.redirect('account/signin');
+    req.session.retUrl = req.originalUrl;
+    res.redirect('/account/signin');
   },
   
   //middleware to check if user is an admin
   isAdmin: (req, res, next) => {
-    if (req.session.user && req.session.user.permission_level === PERMISSIONS.ADMIN) {
+    if (req.session.isAuthenticated && req.session.authUser && req.session.authUser.permission_level === PERMISSIONS.ADMIN) {
       return next();
     }
     res.status(403).send('Access Denied'); 
@@ -26,10 +27,15 @@ export default {
 
   //middleware to check if user is an instructor or admin
   isInstructor(req, res, next) {
-    const level = req.session.authUser.permission_level;
-    if (req.session.isAuthenticated && (level === PERMISSIONS.INSTRUCTOR || level === PERMISSIONS.ADMIN)) {
+    const user = req.session.authUser;
+    if (
+      req.session.isAuthenticated &&
+      user &&
+      (user.permission_level === PERMISSIONS.INSTRUCTOR ||
+        user.permission_level === PERMISSIONS.ADMIN)
+    ) {
       return next();
     }
-    res.status(403).send('Access Denied');
+    return res.status(403).send('Access Denied');
   }
 };

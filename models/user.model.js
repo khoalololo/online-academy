@@ -31,11 +31,21 @@ export default {
   },
 
   async create(userData) {
-    const { username, password, name, email, dob } = userData;
+    const { username, password, name, email, dob, otp_code, otp_expires_at, is_verified = false } = userData;
     const password_hash = await this.hashPassword(password);
 
     const [user] = await db('users')
-      .insert({ username, password_hash, name, email, dob, permission_level: PERMISSIONS.STUDENT })
+      .insert({
+        username,
+        password_hash,
+        name,
+        email,
+        dob,
+        permission_level: PERMISSIONS.STUDENT,
+        is_verified,
+        otp_code,
+        otp_expires_at
+      })
       .returning('*');
 
     return user;
@@ -50,6 +60,17 @@ export default {
     const [result] = await db('users').where('email', email).count('id as count');
     return parseInt(result.count) > 0;
   },
+
+  async verifyUser(userId) {
+    return db("users")
+      .where({ id: userId })
+      .update({
+        is_verified: true,
+        otp_code: null,
+        otp_expires_at: null
+      });
+  },
+
 
   async updateProfile(userId, data) {
     const updateData = {};

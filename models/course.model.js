@@ -42,6 +42,8 @@ const _getBaseQuery = () => {
     );
 };
 
+export const getBaseQuery = _getBaseQuery;
+
 export default {
     async findTopViewed() {
         const courses = await _getBaseQuery()

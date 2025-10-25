@@ -2,6 +2,9 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import userModel from '../models/user.model.js';
 import authMdw from '../middlewares/auth.mdw.js';
+import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+import { sendMail } from '../ultis/emailService.js';
 
 const router = express.Router();
 
@@ -13,27 +16,55 @@ router.get('/signin', (req, res) => {
 // [POST] /account/signin
 router.post('/signin', async (req, res) => {
   const { username, password } = req.body;
-  const user = await userModel.findByUsername(username);
+  try {
+    const user = await userModel.findByUsername(username);
+    if (!user) {
+      console.log('User not found:', username);
+      return res.render('vwAccount/signin', { error_message: 'Invalid username or password.' });
+    }
+    if (!user.is_verified) {
+      return res.render('vwAccount/signin', {
+        error_message: 'Please verify your email before logging in.'
+      });
+    }
+    const isPasswordValid = await userModel.verifyPassword(password, user.password_hash);
+    if (!isPasswordValid) {
+      console.log('Invalid password for user:', username);
+      return res.render('vwAccount/signin', { error_message: 'Invalid username or password.' });
+    }
+    if (!user.is_verified) {
+      return res.render('vwAccount/signin', {
+        error_message: 'Please verify your email before logging in.'
+      });
+    }
 
-  if (!user) {
-    return res.render('vwAccount/signin', {
-      error_message: 'Invalid username or password.'
+    req.session.isAuthenticated = true;
+    req.session.authUser = {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      permission_level: user.permission_level
+    };
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err)
+        return res.render('vwAccount/signin', {
+          error_message: 'Login error. Please try again.'
+        });
+      };
+    
+      console.log('Session saved successfully for user:', username);
+      const redirectUrl = req.session.retUrl || '/';
+      delete req.session.retUrl;
+
+      console.log('Redirecting to:', redirectUrl);
+      res.redirect(redirectUrl);
     });
+  } catch (error) {
+    console.error(error);
+    res.render('vwAccount/signin', { error_message: 'An error occurred during sign-in.' });
   }
-
-  const isPasswordValid = await userModel.verifyPassword(password, user.password_hash);
-  if (!isPasswordValid) {
-    return res.render('vwAccount/signin', {
-      error_message: 'Invalid username or password.'
-    });
-  }
-
-  req.session.isAuthenticated = true;
-  req.session.authUser = user;
-
-  const url = req.session.retUrl || '/';
-  delete req.session.retUrl;
-  res.redirect(url);
 });
 
 // [GET] /account/signup
@@ -43,26 +74,93 @@ router.get('/signup', (req, res) => {
 
 // [POST] /account/signup
 router.post('/signup', async (req, res) => {
-    try {
-        if (req.body.password !== req.body.confirmPassword) {
-             return res.render('vwAccount/signup', { error_message: 'Passwords do not match.' });
-        }
-        if (await userModel.emailExists(req.body.email)) {
-            return res.render('vwAccount/signup', { error_message: 'Email already exists.' });
-        }
+  try {
+    const { username, email, password, confirmPassword, name } = req.body;
+    if (password !== confirmPassword)
+      return res.render('vwAccount/signup', { error_message: 'Passwords do not match.' });
+    if (await userModel.emailExists(email))
+      return res.render('vwAccount/signup', { error_message: 'Email already exists.' });
+    if (await userModel.usernameExists(username))
+      return res.render('vwAccount/signup', { error_message: 'Username already exists.' });
 
-        // The username check is now primarily on the client, but we keep a server-side check as a fallback.
-        if (await userModel.usernameExists(req.body.username)) {
-            return res.render('vwAccount/signup', { error_message: 'Username already exists.' });
-        }
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-        await userModel.create(req.body);
-        res.render('vwAccount/signin', { success_message: 'Registration successful! Please sign in.'});
-    } catch (error) {
-        console.error(error);
-        res.render('vwAccount/signup', { error_message: 'An error occurred during registration.' });
-    }
+    const newUser = await userModel.create({
+      username,
+      email,
+      name,
+      password,
+      is_verified: false,
+      otp_code: otpCode,
+      otp_expires_at: otpExpiresAt,
+    });
+
+    await sendMail({
+      to: email,
+      subject: 'Your Online Academy OTP Verification Code',
+      html: `
+        <h2>Welcome to Online Academy 🎓</h2>
+        <p>Your verification code is:</p>
+        <h1 style="color:#4f46e5;">${otpCode}</h1>
+        <p>This code will expire in 10 minutes.</p>
+      `,
+    });
+
+    req.session.tempUserId = newUser.id;
+    res.redirect('/account/verify-otp');
+  } catch (error) {
+    console.error(error);
+    res.render('vwAccount/signup', { error_message: 'An error occurred during registration.' });
+  }
 });
+
+
+router.get('/verify-otp', (req, res) => {
+  res.render('vwAccount/verify-otp', { emailMessage: 'We sent a code to your email.' });
+});
+
+router.post('/verify-otp', async (req, res) => {
+  const { otp } = req.body;
+  const userId = req.session.tempUserId;
+  const user = await userModel.findById(userId);
+
+  if (!user) return res.redirect('/account/signup');
+
+  if (user.otp_code === otp && new Date() < user.otp_expires_at) {
+    await userModel.verifyUser(userId);
+    delete req.session.tempUserId;
+    return res.render('vwAccount/signin', { success_message: 'Email verified! You can now sign in.' });
+  }
+
+  res.render('vwAccount/verify-otp', { error_message: 'Invalid or expired OTP. Please try again.' });
+});
+
+router.post('/resend-otp', async (req, res) => {
+  const userId = req.session.tempUserId;
+  if (!userId) return res.redirect('/account/signup');
+
+  const user = await userModel.findById(userId);
+  if (!user) return res.redirect('/account/signup');
+
+  const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  const newExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await userModel.update(userId, { otp_code: newOtp, otp_expires_at: newExpiry });
+
+  // Send email again
+  await transporter.sendMail({
+    from: `"Online Academy" <${process.env.MAIL_USER}>`,
+    to: user.email,
+    subject: 'Your new OTP code',
+    text: `Hi ${user.name || user.username}, your new OTP code is ${newOtp}. It expires in 10 minutes.`
+  });
+
+  res.render('vwAccount/verify-otp', {
+    success_message: 'A new OTP has been sent to your email.'
+  });
+});
+
 
 // [GET] /account/is-available - For client-side validation
 router.get('/is-available', async (req, res) => {

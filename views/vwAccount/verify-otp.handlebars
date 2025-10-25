@@ -1,0 +1,29 @@
+<h5 class="p-4 bg-gray-200 font-semibold rounded-t-md">Verify Your Account</h5>
+<div class="p-6">
+  {{#if error_message}}
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+    <span class="block sm:inline">{{error_message}}</span>
+  </div>
+  {{/if}}
+
+  <form method="post" action="/account/verify-otp" class="space-y-6">
+    <p class="text-gray-700 text-sm mb-4">
+      We’ve sent a 6-digit code to your email. Please enter it below to verify your account.
+    </p>
+
+    <div>
+      <label for="otp" class="block text-sm font-medium text-gray-700">OTP Code</label>
+      <div class="mt-1">
+        <input id="otp" name="otp" type="text" maxlength="6" required
+          class="block w-full px-4 py-2 rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+      </div>
+    </div>
+
+    <div>
+      <button type="submit"
+        class="w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700">
+        Verify Account
+      </button>
+    </div>
+  </form>
+</div>
