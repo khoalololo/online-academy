@@ -1,6 +1,9 @@
 import express from 'express';
 import enrollmentModel from '../models/enrollment.model.js';
 import watchlistModel from '../models/watchlist.model.js';
+import courseModel from '../models/course.model.js';
+import lessonModel from '../models/lesson.model.js';
+import reviewModel from '../models/review.model.js';
 import authMdw from '../middlewares/auth.mdw.js';
 
 const router = express.Router();
@@ -69,11 +72,13 @@ router.get('/learn/:proid', async (req, res) => {
     const totalLessons = lessons.length;
     const completedLessons = 0; // TODO: Track lesson completion
     const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const firstLesson = lessons.length > 0 ? lessons[0] : null;
 
     res.render('vwStudent/learn', {
       title: `Learn: ${course.proname}`,
       course,
       lessons,
+      firstLesson,
       enrollment: currentEnrollment,
       progress,
       totalLessons,

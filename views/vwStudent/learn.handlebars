@@ -40,10 +40,10 @@
                 <!-- Video Info -->
                 <div class="p-6">
                     <h1 id="currentLessonTitle" class="text-2xl font-bold text-gray-900 mb-2">
-                        {{#if lessons.0}}{{lessons.0.title}}{{else}}Welcome to the Course{{/if}}
+                        {{#if firstLesson}}{{firstLesson.title}}{{else}}Welcome to the Course{{/if}}
                     </h1>
                     <p id="currentLessonDescription" class="text-gray-600">
-                        {{#if lessons.0.description}}{{lessons.0.description}}{{/if}}
+                        {{#if firstLesson}}{{firstLesson.description}}{{/if}}
                     </p>
 
                     <!-- Course Progress -->
