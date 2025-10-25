@@ -1,76 +1,127 @@
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Search Results for "{{query}}"</h1>
+<h5 class="p-4 bg-gray-200 font-semibold rounded-t-md text-gray-800 text-lg">
+  Search Courses
+</h5>
 
-    <div class="flex justify-between items-center mb-6">
-        <div class="flex items-center space-x-4">
-            <label for="sortBy" class="text-gray-600">Sort by:</label>
-            <select id="sortBy" name="sortBy" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
-                <option value="/products/search?q={{query}}&sortBy=relevance" {{#if (eq sortBy 'relevance')}}selected{{/if}}>Relevance</option>
-                <option value="/products/search?q={{query}}&sortBy=newest" {{#if (eq sortBy 'newest')}}selected{{/if}}>Newest</option>
-                <option value="/products/search?q={{query}}&sortBy=popular" {{#if (eq sortBy 'popular')}}selected{{/if}}>Popular</option>
-                <option value="/products/search?q={{query}}&sortBy=rating" {{#if (eq sortBy 'rating')}}selected{{/if}}>Rating</option>
-                <option value="/products/search?q={{query}}&sortBy=price_asc" {{#if (eq sortBy 'price_asc')}}selected{{/if}}>Price: Low to High</option>
-                <option value="/products/search?q={{query}}&sortBy=price_desc" {{#if (eq sortBy 'price_desc')}}selected{{/if}}>Price: High to Low</option>
-            </select>
-        </div>
-        <div class="flex items-center space-x-4">
-            <label for="category" class="text-gray-600">Category:</label>
-            <select id="category" name="catid" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
-                <option value="/products/search?q={{query}}&sortBy={{sortBy}}">All Categories</option>
-                {{#each categories}}
-                <option value="/products/search?q={{../query}}&sortBy={{../sortBy}}&catid={{this.id}}" {{#if (eq this.id ../catid)}}selected{{/if}}>{{this.name}}</option>
-                {{/each}}
-            </select>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {{#each courses}}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden transform hover:-translate-y-2 transition-transform duration-300">
-            <a href="/products/{{this.proid}}">
-                <img src="/static/images/courses/{{this.proid}}.jpg" alt="{{this.proname}}" class="w-full h-48 object-cover">
-            </a>
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-2">
-                    <div class="text-xs text-gray-500">{{this.category_name}}</div>
-                    <div>
-                        {{#if this.isBestseller}}
-                        <span class="bg-yellow-400 text-white text-xs font-semibold px-2 py-1 rounded-full">Bestseller</span>
-                        {{/if}}
-                        {{#if this.isNew}}
-                        <span class="bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full">New</span>
-                        {{/if}}
-                    </div>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2 truncate">{{this.proname}}</h3>
-                <p class="text-gray-600 text-sm mb-4 h-16 overflow-hidden">{{this.tinydes}}</p>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="text-yellow-500 font-bold">{{#if this.average_rating}}{{this.average_rating}}{{else}}N/A{{/if}}</div>
-                        <div class="text-gray-500 ml-2">({{this.rating_count}})</div>
-                    </div>
-                    <div class="text-xl font-bold text-indigo-600">${{this.price}}</div>
-                </div>
-            </div>
-        </div>
-        {{/each}}
-    </div>
-
-    {{#if pagination.totalPages}}
-    <div class="flex justify-center mt-8">
-        <nav class="flex items-center space-x-2">
-            {{#if pagination.prev_page}}
-            <a href="/products/search?q={{query}}&sortBy={{sortBy}}&catid={{catid}}&page={{pagination.prev_page}}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Previous</a>
-            {{/if}}
-            {{#each pagination.pageNumbers}}
-            <a href="/products/search?q={{../query}}&sortBy={{../sortBy}}&catid={{../catid}}&page={{this.value}}" class="px-4 py-2 border border-gray-300 rounded-md {{#if this.isCurrent}}bg-indigo-600 text-white{{else}}text-gray-700 hover:bg-gray-100{{/if}}">{{this.value}}</a>
+<div class="p-6">
+  <form method="GET" action="/products/search" class="mb-8 p-4 bg-white rounded-lg shadow-sm border">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label for="q" class="block text-sm font-medium text-gray-700">Search for:</label>
+        <input type="text" name="q" id="q" value="{{searchParams.q}}" placeholder="e.g. 'Python' or 'React'"
+               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+      
+      <div>
+        <label for="catid" class="block text-sm font-medium text-gray-700">In Category:</label>
+        <select name="catid" id="catid"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+          <option value="">All Categories</option>
+          {{#each allCategories}}
+            <option value="{{this.id}}" class="font-bold" {{#if (eq this.id ../searchParams.catid)}}selected{{/if}}>
+              {{this.name}}
+            </option>
+            {{#each this.subcategories}}
+              <option value="{{this.id}}" {{#if (eq this.id ../../searchParams.catid)}}selected{{/if}}>
+                &nbsp; &nbsp; &bull; {{this.name}}
+              </option>
             {{/each}}
-            {{#if pagination.next_page}}
-            <a href="/products/search?q={{query}}&sortBy={{sortBy}}&catid={{catid}}&page={{pagination.next_page}}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">Next</a>
-            {{/if}}
-        </nav>
+          {{/each}}
+        </select>
+      </div>
+
+      <div>
+        <label for="sortBy" class="block text-sm font-medium text-gray-700">Sort by:</label>
+        <select name="sortBy" id="sortBy"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+          <option value="relevance" {{#if (eq searchParams.sortBy "relevance")}}selected{{/if}}>Relevance</option>
+          <option value="newest" {{#if (eq searchParams.sortBy "newest")}}selected{{/if}}>Newest</option>
+          <option value="popular" {{#if (eq searchParams.sortBy "popular")}}selected{{/if}}>Most Popular</option>
+          <option value="rating" {{#if (eq searchParams.sortBy "rating")}}selected{{/if}}>Highest Rating</option>
+          <option value="price_asc" {{#if (eq searchParams.sortBy "price_asc")}}selected{{/if}}>Price: Low to High</option>
+        </select>
+      </div>
     </div>
+    <div class="mt-4 text-right">
+      <button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+        Search
+      </button>
+    </div>
+  </form>
+
+  {{#if courses.length}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {{#each courses}}
+      <div class="bg-white rounded-lg shadow-md overflow-hidden flex flex-col group relative">
+        {{!-- Badges for Best Seller & New --}}
+        {{#if this.isBestseller}}
+          <span class="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full z-10">Best Seller</span>
+        {{/if}}
+        {{#if this.isNew}}
+           <span class="absolute top-2 {{#if this.isBestseller}}left-24{{else}}left-2{{/if}} bg-green-400 text-green-900 text-xs font-bold px-2 py-1 rounded-full z-10">New</span>
+        {{/if}}
+
+        <a href="/products/detail?id={{this.proid}}" class="block">
+          <img class="w-full h-48 object-cover" src="https://placehold.co/600x400/e2e8f0/64748b?text=Course+Image" alt="{{this.proname}}">
+        </a>
+        <div class="p-4 flex flex-col flex-grow">
+          <p class="text-sm text-indigo-600 font-semibold mb-1">{{this.category_name}}</p>
+          <h3 class="text-lg font-bold text-gray-900 mb-2 truncate group-hover:text-indigo-600 transition-colors">
+            <a href="/products/detail?id={{this.proid}}">{{this.proname}}</a>
+          </h3>
+          <p class="text-xs text-gray-600 mb-3">By {{this.instructor_name}}</p>
+          
+          <div class="flex items-center mb-4">
+            <span class="text-sm font-bold text-yellow-500 mr-1">{{toFixed this.average_rating 1}}</span>
+            <div class="flex items-center text-yellow-400 text-sm">
+              {{{stars this.average_rating}}}
+            </div>
+            <span class="text-xs text-gray-500 ml-2">({{formatNumber this.rating_count}})</span>
+          </div>
+
+          <div class="mt-auto flex justify-end items-center">
+            {{#if this.promo_price}}
+              <span class="text-lg font-bold text-red-600">${{formatNumber this.promo_price}}</span>
+              <span class="text-sm text-gray-500 line-through ml-2">${{formatNumber this.price}}</span>
+            {{else}}
+              <span class="text-lg font-bold text-gray-800">${{formatNumber this.price}}</span>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+      {{/each}}
+    </div>
+
+    {{!-- PAGINATION (uses buildQueryString helper) --}}
+    {{#with pagination}}
+    {{#if (gt totalPages 1)}}
+    <nav aria-label="Page navigation" class="mt-10 flex justify-center">
+      <ul class="inline-flex items-center space-x-2">
+        <li>
+          <a href="{{#if hasPrev}}/products/search?{{buildQueryString ../searchParams 'page' (sub page 1)}}{{else}}#{{/if}}"
+             class="px-3 py-2 rounded-lg border text-sm font-medium {{#if hasPrev}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+            ‹ Prev
+          </a>
+        </li>
+        {{#each pageNumbers}}
+        <li>
+          <a href="/products/search?{{buildQueryString ../../searchParams 'page' this.value}}"
+             class="px-3 py-2 rounded-lg border text-sm font-medium {{#if this.isCurrent}}bg-indigo-600 text-white border-indigo-600{{else}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{/if}}">
+            {{this.value}}
+          </a>
+        </li>
+        {{/each}}
+        <li>
+          <a href="{{#if hasNext}}/products/search?{{buildQueryString ../searchParams 'page' (add page 1)}}{{else}}#{{/if}}"
+             class="px-3 py-2 rounded-lg border text-sm font-medium {{#if hasNext}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+            Next ›
+          </a>
+        </li>
+      </ul>
+    </nav>
     {{/if}}
+    {{/with}}
+
+  {{else}}
+    <p class="text-gray-500 text-center text-lg py-12">No courses matched your search.</p>
+  {{/if}}
 </div>

@@ -5,19 +5,42 @@ import db from '../ultis/db.js';
  * This is a private helper function to reduce code duplication.
  * @returns {import('knex').Knex.QueryBuilder}
  */
-function _getBaseQuery() {
-    const ratingSubquery = db('reviews')
-        .select('proid')
-        .avg('rating as average_rating')
-        .count('rating as rating_count')
-        .groupBy('proid')
-        .as('ratings');
 
-    return db('courses as c')
-        .join('categories as cat', 'c.catid', 'cat.id')
-        .join('users as u', 'c.instructor_id', 'u.id')
-        .leftJoin(ratingSubquery, 'c.proid', 'ratings.proid');
-}
+// A subquery to get average rating and count
+const _getRatingSubquery = () => {
+  return db('reviews')
+    .select('proid')
+    .avg('rating as average_rating')
+    .count('id as rating_count')
+    .groupBy('proid')
+    .as('ratings');
+};
+
+// A subquery to get enrollment count (for 'Best Seller')
+const _getEnrollmentSubquery = () => {
+  return db('enrollment')
+    .select('proid')
+    .count('user_id as enrollment_count')
+    .groupBy('proid')
+    .as('enrollments');
+};
+
+// Base query with all common joins
+const _getBaseQuery = () => {
+  return db('courses as c')
+    .join('categories as cat', 'c.catid', 'cat.id')
+    .join('users as u', 'c.instructor_id', 'u.id')
+    .leftJoin(_getRatingSubquery(), 'c.proid', 'ratings.proid')
+    .leftJoin(_getEnrollmentSubquery(), 'c.proid', 'enrollments.proid')
+    .select(
+      'c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.last_updated',
+      'cat.name as category_name',
+      'u.name as instructor_name',
+      db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+      db.raw('COALESCE(ratings.rating_count, 0) as rating_count'),
+      db.raw('COALESCE(enrollments.enrollment_count, 0) as enrollment_count')
+    );
+};
 
 export default {
     async findTopViewed() {
@@ -126,82 +149,68 @@ export default {
             .increment('views', 1);
     },
 
-    async search(query, page = 1, limit = 10, sortBy = 'relevance', catid = null) {
+    async search(query, catid = null, sortBy = 'relevance', page = 1, limit = 6) {
         const offset = (page - 1) * limit;
+        let coursesQuery = _getBaseQuery();
+        let countQuery = db('courses as c');
 
-        let coursesQuery = _getBaseQuery()
-            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
-                'cat.name as category_name', 'u.name as instructor_name',
-                'ratings.average_rating', 'ratings.rating_count', 'c.last_updated')
-            .where(function () {
-                this.where('c.proname', 'like', `%${query}%`)
-                    .orWhere('c.fulldes', 'like', `%${query}%`);
-            });
+        if (query) {
+        const ftsQuery = `websearch_to_tsquery('simple', ?_query)`;
+        const ftsMatch = `c.fts @@ ${ftsQuery}`;
 
-        if (catid) {
-            coursesQuery = coursesQuery.andWhere('c.catid', catid);
+        coursesQuery = coursesQuery.whereRaw(ftsMatch, { _query: query });
+        countQuery = countQuery.whereRaw(ftsMatch, { _query: query });
         }
 
-        let countQuery = db('courses as c').where(function () {
-            this.where('c.proname', 'like', `%${query}%`)
-                .orWhere('c.fulldes', 'like', `%${query}%`);
-        });
-
         if (catid) {
-            countQuery = countQuery.andWhere('c.catid', catid);
+        coursesQuery = coursesQuery.andWhere('c.catid', catid);
+        countQuery = countQuery.andWhere('c.catid', catid);
         }
 
         switch (sortBy) {
-            case 'price_asc':
-                coursesQuery = coursesQuery.orderBy('c.price', 'asc');
-                break;
-            case 'price_desc':
-                coursesQuery = coursesQuery.orderBy('c.price', 'desc');
-                break;
-            case 'rating':
-                coursesQuery = coursesQuery.orderBy('ratings.average_rating', 'desc');
-                break;
-            case 'newest':
-                coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
-                break;
-            case 'popular':
-                coursesQuery = coursesQuery
-                    .leftJoin('enrollment as e', 'c.proid', 'e.proid')
-                    .groupBy('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views', 'cat.name', 'u.name', 'ratings.average_rating', 'ratings.rating_count', 'c.last_updated')
-                    .select(db.raw('COUNT(e.user_id) as enrollment_count'))
-                    .orderBy('enrollment_count', 'desc');
-                break;
-            case 'relevance':
-            default:
-                coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
-                break;
+        case 'price_asc':
+            coursesQuery = coursesQuery.orderBy(db.raw('COALESCE(c.promo_price, c.price)'), 'asc');
+            break;
+        case 'rating':
+            coursesQuery = coursesQuery.orderBy([
+            { column: 'average_rating', order: 'desc', nulls: 'last' },
+            { column: 'rating_count', order: 'desc' }
+            ]);
+            break;
+        case 'popular':
+            coursesQuery = coursesQuery.orderBy('enrollment_count', 'desc', 'last');
+            break;
+        case 'newest':
+        case 'relevance': // Defaulting relevance to newest
+        default:
+            coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+            break;
         }
 
         const courses = await coursesQuery.limit(limit).offset(offset);
         const [{ count }] = await countQuery.count('c.proid as count');
 
+        // --- Add 'New' and 'Best Seller' Tags ---
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
         courses.forEach(course => {
-            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
-            // Add bestseller and new tags
-            const enrollmentCount = course.enrollment_count || 0;
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            if (enrollmentCount > 100) { // Define bestseller threshold
-                course.isBestseller = true;
-            }
-            if (new Date(course.last_updated) > thirtyDaysAgo) { // Define new threshold
-                course.isNew = true;
-            }
+        if (course.enrollment_count > 50) {
+            course.isBestseller = true;
+        }
+        if (new Date(course.last_updated) > thirtyDaysAgo) {
+            course.isNew = true;
+        }
         });
 
         return {
-            courses: courses,
-            pagination: {
-                page,
-                limit,
-                total: parseInt(count),
-                totalPages: Math.ceil(parseInt(count) / limit)
-            }
+        courses,
+        pagination: {
+            page,
+            limit,
+            total: parseInt(count),
+            totalPages: Math.ceil(parseInt(count) / limit)
+        }
         };
     }
 };

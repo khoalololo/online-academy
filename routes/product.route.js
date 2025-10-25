@@ -148,52 +148,53 @@ router.get('/:proid', async function (req, res) {
 
 router.get('/search', async function (req, res) {
   try {
-    const query = req.query.q || '';
     const page = +req.query.page || 1;
-    const sortBy = req.query.sortBy || 'relevance'; // Default sort by relevance
-    const categoryId = +req.query.catid || null;
+    const limit = 6; // 6 courses per page
+    const searchQuery = req.query.q || '';
+    const catId = +req.query.catid || null;
+    const sortBy = req.query.sortBy || 'relevance';
 
-    let coursesQuery = courseModel.search(query, categoryId);
+    // Call the model function with all parameters
+    const result = await courseModel.search(
+      searchQuery,
+      catId,
+      sortBy,
+      page,
+      limit
+    );
 
-    // Apply sorting
-    switch (sortBy) {
-      case 'price_asc':
-        coursesQuery = coursesQuery.orderBy('c.price', 'asc');
-        break;
-      case 'price_desc':
-        coursesQuery = coursesQuery.orderBy('c.price', 'desc');
-        break;
-      case 'rating':
-        coursesQuery = coursesQuery.orderBy('ratings.average_rating', 'desc');
-        break;
-      case 'newest':
-        coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
-        break;
-      case 'popular': // Most enrolled
-        coursesQuery = coursesQuery
-          .leftJoin('enrollment as e', 'c.proid', 'e.proid')
-          .groupBy('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views', 'cat.name', 'u.name', 'ratings.average_rating', 'ratings.rating_count', 'c.last_updated') // Include all selected columns in GROUP BY
-          .select(db.raw('COUNT(e.user_id) as enrollment_count'))
-          .orderBy('enrollment_count', 'desc');
-        break;
-      case 'relevance':
-      default:
-        // Default sorting for relevance can be more complex, for now, let's use last_updated
-        coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
-        break;
+    // Fetch categories for the filter dropdown
+    const allCategories = await categoryModel.getHierarchicalMenu();
+
+    // Prepare pagination
+    const pageNumbers = [];
+    if (result.pagination.totalPages > 1) {
+      for (let i = 1; i <= result.pagination.totalPages; i++) {
+        pageNumbers.push({
+          value: i,
+          isCurrent: i === page
+        });
+      }
     }
 
-    const result = await coursesQuery.paginate(page, COURSES_PER_PAGE);
+    // This object holds the current search state to pre-fill the form
+    const searchParams = {
+      q: searchQuery,
+      catid: catId,
+      sortBy: sortBy
+    };
 
-    const categories = await categoryModel.findAll();
-
-    res.render('vwProduct/search', {
-      title: `Search results for "${query}"`,
+    res.render('vwProducts/search', {
+      title: `Search results for "${searchQuery}"`,
       courses: result.courses,
+      allCategories,
+      searchParams, // Pass current params back to the view
       pagination: {
         ...result.pagination,
-        pageNumbers: generatePageNumbers(1, result.pagination.totalPages),
-      },
+        hasPrev: page > 1,
+        hasNext: page < result.pagination.totalPages,
+        pageNumbers
+      }
     });
   } catch (error) {
     console.error('Error fetching search results:', error);

@@ -103,7 +103,12 @@ app.engine('handlebars', engine({
     percentage(original, promo) {
       if (!promo || promo >= original) return 0;
       return Math.round(((original - promo) / original) * 100);
-  }
+    },
+    buildQueryString: (params, newKey, newValue) => {
+      const query = new URLSearchParams(params);
+      query.set(newKey, newValue);
+      return query.toString();
+    }
     // Add other helpers if needed
     
   }
