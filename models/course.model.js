@@ -218,5 +218,177 @@ export default {
                 totalPages: Math.ceil(parseInt(count) / limit)
             }
         };
+    },
+
+    // ==================== INSTRUCTOR METHODS ====================
+
+    /**
+     * Find all courses by instructor
+     */
+    async findByInstructor(instructorId, page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        
+        const courses = await _getBaseQuery()
+            .where('c.instructor_id', instructorId)
+            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 
+                    'c.last_updated',
+                    'cat.name as category_name',
+                    'ratings.average_rating', 'ratings.rating_count',
+                    'enrollments.enrollment_count')
+            .orderBy('c.last_updated', 'desc')
+            .limit(limit)
+            .offset(offset);
+
+        const [{ count }] = await db('courses')
+            .where('instructor_id', instructorId)
+            .count('proid as count');
+
+        courses.forEach(course => {
+            if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+        });
+
+        return {
+            courses,
+            pagination: {
+                page,
+                limit,
+                total: parseInt(count),
+                totalPages: Math.ceil(parseInt(count) / limit)
+            }
+        };
+    },
+
+    /**
+     * Create a new course (instructor)
+     */
+    async createByInstructor(courseData) {
+        const {
+            instructor_id,
+            proname,
+            tinydes,
+            fulldes,
+            catid,
+            price,
+            promo_price
+        } = courseData;
+
+        const [course] = await db('courses')
+            .insert({
+                instructor_id,
+                proname,
+                tinydes,
+                fulldes,
+                catid,
+                price: parseFloat(price),
+                promo_price: promo_price ? parseFloat(promo_price) : null,
+                views: 0,
+                is_disabled: false,
+                last_updated: db.fn.now()
+            })
+            .returning('*');
+
+        return course;
+    },
+
+    /**
+     * Update course (instructor)
+     */
+    async updateByInstructor(proid, instructorId, courseData) {
+        // First verify ownership
+        const course = await db('courses')
+            .where({ proid, instructor_id: instructorId })
+            .first();
+        
+        if (!course) {
+            throw new Error('Course not found or access denied');
+        }
+
+        const updateData = {
+            proname: courseData.proname,
+            tinydes: courseData.tinydes,
+            fulldes: courseData.fulldes,
+            catid: courseData.catid,
+            price: parseFloat(courseData.price),
+            last_updated: db.fn.now()
+        };
+
+        if (courseData.promo_price) {
+            updateData.promo_price = parseFloat(courseData.promo_price);
+        }
+
+        const [updated] = await db('courses')
+            .where({ proid, instructor_id: instructorId })
+            .update(updateData)
+            .returning('*');
+
+        return updated;
+    },
+
+    /**
+     * Delete course (only if no enrollments)
+     */
+    async deleteByInstructor(proid, instructorId) {
+        // Verify ownership
+        const course = await db('courses')
+            .where({ proid, instructor_id: instructorId })
+            .first();
+        
+        if (!course) {
+            throw new Error('Course not found or access denied');
+        }
+
+        // Check for enrollments
+        const [{ count: enrollCount }] = await db('enrollment')
+            .where('proid', proid)
+            .count('user_id as count');
+
+        if (parseInt(enrollCount) > 0) {
+            throw new Error('Cannot delete course with existing enrollments. You can disable it instead.');
+        }
+
+        // Delete related data first
+        await db('lessons').where('proid', proid).del();
+        await db('reviews').where('proid', proid).del();
+        await db('watchlist').where('proid', proid).del();
+
+        // Delete the course
+        await db('courses').where({ proid, instructor_id: instructorId }).del();
+        
+        return true;
+    },
+
+    /**
+     * Get instructor dashboard statistics
+     */
+    async getInstructorStats(instructorId) {
+        // Total courses
+        const [{ count: totalCourses }] = await db('courses')
+            .where('instructor_id', instructorId)
+            .count('proid as count');
+
+        // Total students (unique enrollments across all courses)
+        const [{ count: totalStudents }] = await db('enrollment')
+            .join('courses', 'enrollment.proid', 'courses.proid')
+            .where('courses.instructor_id', instructorId)
+            .countDistinct('enrollment.user_id as count');
+
+        // Total reviews
+        const [{ count: totalReviews }] = await db('reviews')
+            .join('courses', 'reviews.proid', 'courses.proid')
+            .where('courses.instructor_id', instructorId)
+            .count('reviews.id as count');
+
+        // Average rating
+        const [{ avg: avgRating }] = await db('reviews')
+            .join('courses', 'reviews.proid', 'courses.proid')
+            .where('courses.instructor_id', instructorId)
+            .avg('reviews.rating as avg');
+
+        return {
+            totalCourses: parseInt(totalCourses),
+            totalStudents: parseInt(totalStudents),
+            totalReviews: parseInt(totalReviews),
+            averageRating: avgRating ? parseFloat(parseFloat(avgRating).toFixed(1)) : 0
+        };
     }
 };

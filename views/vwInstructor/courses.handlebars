@@ -1,0 +1,211 @@
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">My Courses</h1>
+            <p class="mt-2 text-gray-600">Manage and track all your courses</p>
+        </div>
+        <a href="/instructor/courses/create" 
+           class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-md">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create New Course
+        </a>
+    </div>
+
+    {{#if courses.length}}
+        <!-- Courses Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {{#each courses}}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
+                <!-- Course Image -->
+                <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
+                    <img src="https://picsum.photos/400/300?random={{this.proid}}" 
+                         alt="{{this.proname}}" 
+                         class="w-full h-full object-cover opacity-80">
+                    
+                    <!-- Status Badge -->
+                    <div class="absolute top-3 right-3">
+                        {{#if this.is_disabled}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
+                                Disabled
+                            </span>
+                        {{else}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white">
+                                Active
+                            </span>
+                        {{/if}}
+                    </div>
+                </div>
+
+                <!-- Course Info -->
+                <div class="p-6">
+                    <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded-full mb-2">
+                        {{this.category_name}}
+                    </span>
+                    
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                        {{this.proname}}
+                    </h3>
+                    
+                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                        {{this.tinydes}}
+                    </p>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-2 mb-4 pb-4 border-b">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-indigo-600">{{formatNumber this.enrollment_count}}</p>
+                            <p class="text-xs text-gray-500">Students</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-yellow-500">{{toFixed this.average_rating 1}}</p>
+                            <p class="text-xs text-gray-500">Rating</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-700">{{this.rating_count}}</p>
+                            <p class="text-xs text-gray-500">Reviews</p>
+                        </div>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="mb-4">
+                        {{#if this.promo_price}}
+                            <span class="text-2xl font-bold text-red-600">${{formatNumber this.promo_price}}</span>
+                            <span class="ml-2 text-sm text-gray-500 line-through">${{formatNumber this.price}}</span>
+                        {{else}}
+                            <span class="text-2xl font-bold text-gray-900">${{formatNumber this.price}}</span>
+                        {{/if}}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-2">
+                        <a href="/instructor/courses/{{this.proid}}/edit" 
+                           class="flex-1 text-center px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                            Edit
+                        </a>
+                        <a href="/instructor/courses/{{this.proid}}/lessons" 
+                           class="flex-1 text-center px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">
+                            Lessons
+                        </a>
+                        <a href="/products/{{this.proid}}" 
+                           class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <!-- Delete Button -->
+                    <button onclick="deleteCourse({{this.proid}}, '{{this.proname}}')" 
+                            class="w-full mt-2 px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-colors">
+                        Delete Course
+                    </button>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+
+        <!-- Pagination -->
+        {{#if (gt pagination.totalPages 1)}}
+        <nav aria-label="Page navigation" class="mt-10 flex justify-center">
+            <ul class="inline-flex items-center space-x-2">
+                <li>
+                    <a href="?page={{sub pagination.page 1}}" 
+                       class="px-3 py-2 rounded-lg border text-sm font-medium {{#if (gt pagination.page 1)}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+                        ‹ Prev
+                    </a>
+                </li>
+                {{#each pagination.pageNumbers}}
+                <li>
+                    <a href="?page={{this.value}}" 
+                       class="px-3 py-2 rounded-lg border text-sm font-medium {{#if this.isCurrent}}bg-indigo-600 text-white border-indigo-600{{else}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{/if}}">
+                        {{this.value}}
+                    </a>
+                </li>
+                {{/each}}
+                <li>
+                    <a href="?page={{add pagination.page 1}}" 
+                       class="px-3 py-2 rounded-lg border text-sm font-medium {{#if (lt pagination.page pagination.totalPages)}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+                        Next ›
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {{/if}}
+    {{else}}
+        <!-- Empty State -->
+        <div class="text-center py-16 bg-white rounded-xl shadow-md">
+            <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <h3 class="mt-4 text-xl font-medium text-gray-900">No courses yet</h3>
+            <p class="mt-2 text-gray-500">Get started by creating your first course!</p>
+            <div class="mt-6">
+                <a href="/instructor/courses/create" 
+                   class="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Your First Course
+                </a>
+            </div>
+        </div>
+    {{/if}}
+</div>
+
+{{#section 'js'}}
+<script>
+async function deleteCourse(proid, courseName) {
+    const result = await Swal.fire({
+        title: 'Delete Course?',
+        html: `Are you sure you want to delete <strong>${courseName}</strong>?<br><br><small class="text-red-600">This action cannot be undone and will only work if there are no enrolled students.</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete it',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/instructor/courses/${proid}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'Course has been deleted.',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                title: 'Cannot Delete',
+                text: data.message || 'Failed to delete course.',
+                icon: 'error',
+                confirmButtonColor: '#4F46E5'
+            });
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: 'An error occurred. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+</script>
+{{/section}}

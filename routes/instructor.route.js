@@ -6,7 +6,6 @@ import lessonModel from '../models/lesson.model.js';
 
 const router = express.Router();
 
-// Apply instructor authentication middleware to all routes
 router.use(authMdw.isInstructor);
 
 // ==================== DASHBOARD ====================
@@ -16,10 +15,7 @@ router.get('/dashboard', async (req, res) => {
   try {
     const instructorId = req.session.authUser.id;
     
-    // Get instructor statistics
     const stats = await courseModel.getInstructorStats(instructorId);
-    
-    // Get recent courses (first 5)
     const coursesResult = await courseModel.findByInstructor(instructorId, 1, 5);
     
     res.render('vwInstructor/dashboard', {
@@ -40,12 +36,11 @@ router.get('/courses', async (req, res) => {
   try {
     const instructorId = req.session.authUser.id;
     
-    // TODO: Fetch instructor's courses from database
-    // const courses = await courseModel.findByInstructor(instructorId);
+    const courses = await courseModel.findByInstructor(instructorId);
     
     res.render('vwInstructor/courses', {
       title: 'My Courses',
-      courses: [] // Replace with actual data
+      courses
     });
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -78,9 +73,7 @@ router.post('/courses/create', async (req, res) => {
       instructor_id: instructorId
     };
     
-    // TODO: Validate course data
-    // TODO: Create course in database
-    // const newCourse = await courseModel.createByInstructor(courseData);
+    const newCourse = await courseModel.createByInstructor(courseData);
     
     res.redirect('/instructor/courses');
   } catch (error) {
@@ -94,19 +87,18 @@ router.get('/courses/:proid/edit', async (req, res) => {
   try {
     const proid = +req.params.proid;
     const instructorId = req.session.authUser.id;
-    
-    // TODO: Fetch course and verify ownership
-    // const course = await courseModel.findById(proid);
-    // if (course.instructor_id !== instructorId) {
-    //   return res.status(403).send('Access Denied');
-    // }
+
+    const course = await courseModel.findById(proid);
+    if (course.instructor_id !== instructorId) {
+       return res.status(403).send('Access Denied');
+     }
     
     const categories = await categoryModel.getHierarchicalMenu();
     
     res.render('vwInstructor/course-form', {
       title: 'Edit Course',
       categories,
-      course: {}, // Replace with actual course data
+      course,
       isEdit: true
     });
   } catch (error) {
