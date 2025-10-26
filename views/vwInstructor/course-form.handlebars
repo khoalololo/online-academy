@@ -1,0 +1,210 @@
+<div class="max-w-5xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <nav class="mb-4 text-sm">
+            <ol class="flex items-center space-x-2 text-gray-600">
+                <li><a href="/instructor/dashboard" class="hover:text-indigo-600">Dashboard</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li><a href="/instructor/courses" class="hover:text-indigo-600">My Courses</a></li>
+                <li><span class="mx-2">/</span></li>
+                <li class="text-gray-900 font-semibold">
+                    {{#if isEdit}}Edit Course{{else}}Create Course{{/if}}
+                </li>
+            </ol>
+        </nav>
+
+        <h1 class="text-3xl font-bold text-gray-900">
+            {{#if isEdit}}Edit Course{{else}}Create New Course{{/if}}
+        </h1>
+        <p class="mt-2 text-gray-600">
+            {{#if isEdit}}Update your course information{{else}}Fill in the details to create your course{{/if}}
+        </p>
+    </div>
+
+    <!-- Error/Success -->
+    {{#if error_message}}
+    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-lg">
+        <p class="text-sm text-red-700 font-medium">{{error_message}}</p>
+    </div>
+    {{/if}}
+
+    <!-- Course Form -->
+    <form method="POST" action="{{#if isEdit}}/instructor/courses/{{course.proid}}/edit{{else}}/instructor/courses/create{{/if}}" id="courseForm" class="bg-white rounded-xl shadow-md overflow-hidden">
+
+        <!-- Basic Info -->
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Basic Information
+            </h2>
+
+            <div class="space-y-6">
+                <div>
+                    <label for="proname" class="block text-sm font-medium text-gray-700 mb-2">Course Title <span class="text-red-500">*</span></label>
+                    <input id="proname" name="proname" type="text" required maxlength="200"
+                        value="{{#if course}}{{course.proname}}{{else}}{{formData.proname}}{{/if}}"
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        placeholder="e.g., Complete Web Development Bootcamp">
+                </div>
+
+                <div>
+                    <label for="tinydes" class="block text-sm font-medium text-gray-700 mb-2">Short Description <span class="text-red-500">*</span></label>
+                    <textarea id="tinydes" name="tinydes" rows="3" required maxlength="500"
+                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">{{#if course}}{{course.tinydes}}{{else}}{{formData.tinydes}}{{/if}}</textarea>
+                </div>
+
+                <div>
+                    <label for="catid" class="block text-sm font-medium text-gray-700 mb-2">Category <span class="text-red-500">*</span></label>
+                    <select id="catid" name="catid" required class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white">
+                        <option value="">Select a category</option>
+                        {{#each categories}}
+                            <optgroup label="{{this.name}}">
+                                <option value="{{this.id}}" {{#if (eq this.id ../course.catid)}}selected{{/if}}>
+                                    {{this.name}}
+                                </option>
+                                {{#each this.subcategories}}
+                                    <option value="{{this.id}}" {{#if (eq this.id ../../course.catid)}}selected{{/if}}>
+                                        &nbsp;&nbsp;• {{this.name}}
+                                    </option>
+                                {{/each}}
+                            </optgroup>
+                        {{/each}}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                </svg>
+                Course Description
+            </h2>
+
+            <label for="fulldes" class="block text-sm font-medium text-gray-700 mb-2">Full Description <span class="text-red-500">*</span></label>
+            <textarea id="fulldes" name="fulldes" class="tinymce-editor">{{#if course}}{{{course.fulldes}}}{{else}}{{{formData.fulldes}}}{{/if}}</textarea>
+        </div>
+
+        <!-- Pricing -->
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2
+                        3 .895 3 2-1.343 2-3 2m0-8
+                        c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8
+                        m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                </svg>
+                Pricing
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Regular Price ($) *</label>
+                    <input id="price" name="price" type="number" min="0" step="0.01"
+                        value="{{#if course}}{{course.price}}{{else}}{{formData.price}}{{/if}}"
+                        class="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label for="promo_price" class="block text-sm font-medium text-gray-700 mb-2">Promotional Price ($)</label>
+                    <input id="promo_price" name="promo_price" type="number" min="0" step="0.01"
+                        value="{{#if course}}{{course.promo_price}}{{else}}{{formData.promo_price}}{{/if}}"
+                        class="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <div id="pricePreview" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                <p class="text-sm font-medium text-gray-700 mb-2">Price Preview:</p>
+                <div class="flex items-baseline space-x-3">
+                    <span id="displayPromoPrice" class="text-3xl font-bold text-red-600"></span>
+                    <span id="displayRegularPrice" class="text-xl text-gray-500 line-through"></span>
+                    <span id="displayDiscount" class="inline-block bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="p-6 bg-gray-50 flex justify-between items-center">
+            <a href="/instructor/courses" class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Cancel</a>
+            <button type="submit" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 flex items-center shadow-md">
+                {{#if isEdit}}
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Update Course
+                {{else}}
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Course
+                {{/if}}
+            </button>
+        </div>
+    </form>
+</div>
+
+{{#section 'js'}}
+<script src="https://cdn.tiny.cloud/1/kzzotj6vewdf2rds2c2ugcvduo8qtaobch6nyl6ilhg1a8qj/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script>
+tinymce.init({
+    selector: '.tinymce-editor',
+    height: 400,
+    menubar: false,
+    plugins: 'link image media table code lists',
+    toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+    automatic_uploads: true,
+    images_upload_url: '/instructor/upload-image',
+    file_picker_types: 'image',
+    file_picker_callback: (cb, v, meta) => {
+        const input = document.createElement('input');
+        input.type = 'file'; input.accept = 'image/*';
+        input.onchange = () => {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = () => cb(reader.result, { alt: file.name });
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+});
+
+// Price Preview
+const priceInput = document.getElementById('price');
+const promoInput = document.getElementById('promo_price');
+const pricePreview = document.getElementById('pricePreview');
+const displayPromoPrice = document.getElementById('displayPromoPrice');
+const displayRegularPrice = document.getElementById('displayRegularPrice');
+const displayDiscount = document.getElementById('displayDiscount');
+
+function updatePricePreview() {
+    const price = parseFloat(priceInput.value) || 0;
+    const promo = parseFloat(promoInput.value) || 0;
+    if (promo > 0 && promo < price) {
+        const discount = Math.round(((price - promo) / price) * 100);
+        displayPromoPrice.textContent = `$${promo.toFixed(2)}`;
+        displayRegularPrice.textContent = `$${price.toFixed(2)}`;
+        displayDiscount.textContent = `${discount}% OFF`;
+        pricePreview.classList.remove('hidden');
+    } else {
+        pricePreview.classList.add('hidden');
+    }
+}
+priceInput.addEventListener('input', updatePricePreview);
+promoInput.addEventListener('input', updatePricePreview);
+
+// Validate on submit
+document.getElementById('courseForm').addEventListener('submit', e => {
+    tinymce.triggerSave();
+    const price = parseFloat(priceInput.value) || 0;
+    const promo = parseFloat(promoInput.value) || 0;
+    if (promo >= price && promo !== 0) {
+        e.preventDefault();
+        alert('Promotional price must be less than the regular price.');
+    }
+});
+</script>
+{{/section}}

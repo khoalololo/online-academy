@@ -114,6 +114,26 @@
                         class="block w-full px-4 py-2 rounded-lg border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 </div>
 
+                <div>
+                    <label for="bio" class="block text-sm font-medium text-gray-700 mb-1">
+                        Biography / About Me
+                    </label>
+                    <textarea 
+                        id="bio" 
+                        name="bio" 
+                        rows="5" 
+                        maxlength="1000"
+                        class="block w-full px-4 py-2 rounded-lg border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                        placeholder="Tell others about yourself, your interests, and your background...">{{user.bio}}</textarea>
+                    <p class="mt-1 text-xs text-gray-500">
+                        {{#if (eq user.permission_level 2)}}
+                            This will be displayed on your course pages (max 1000 characters)
+                        {{else}}
+                            Share a bit about yourself (max 1000 characters)
+                        {{/if}}
+                    </p>
+                </div>
+
                 <div class="pt-4">
                     <button 
                         type="submit" 
@@ -186,113 +206,163 @@
         </div>
     </div>
 
+    <!-- Quick Links -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {{#if (eq authUser.permission_level 2)}}
-            <a href="/instructor/courses" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 5a2 2 0 012-2h12a2 2 0 012 2v16l-8-4-8 4V5z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">My Courses</p>
-                        <p class="text-xs text-gray-500 mt-1">View and manage your courses</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="/instructor/create-course" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4v16m8-8H4"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">Create Course</p>
-                        <p class="text-xs text-gray-500 mt-1">Design and publish new courses</p>
-                    </div>
-                </div>
-            </a>
-
-            <a href="/instructor/dashboard" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 12h6v8H3v-8zm12 0h6v8h-6v-8zM3 4h6v4H3V4zm12 0h6v4h-6V4z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">Dashboard</p>
-                        <p class="text-xs text-gray-500 mt-1">Analytics and performance overview</p>
-                    </div>
-                </div>
-            </a>
-        {{/if}}
-
-        {{!-- Student --}}
         {{#if (eq authUser.permission_level 1)}}
-            <a href="/student/enrolled" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">My Courses</p>
-                        <p class="text-xs text-gray-500 mt-1">View enrolled courses</p>
-                    </div>
+        <a href="/student/enrolled" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
                 </div>
-            </a>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">My Courses</p>
+                    <p class="text-xs text-gray-500 mt-1">View enrolled courses</p>
+                </div>
+            </div>
+        </a>
 
-            <a href="/student/watchlist" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">Watchlist</p>
-                        <p class="text-xs text-gray-500 mt-1">Saved courses</p>
-                    </div>
+        <a href="/student/watchlist" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                    </svg>
                 </div>
-            </a>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Watchlist</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved courses</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="/products" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Browse</p>
+                    <p class="text-xs text-gray-500 mt-1">Explore courses</p>
+                </div>
+            </div>
+        </a>
         {{/if}}
 
-        {{!-- Admin --}}
-        {{#if (eq authUser.permission_level 3)}}
-            <a href="/admin/dashboard" 
-            class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <svg class="h-8 w-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0h6"/>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-700">Admin Dashboard</p>
-                        <p class="text-xs text-gray-500 mt-1">Manage users, courses, and reports</p>
-                    </div>
+        {{#if (eq authUser.permission_level 2)}}
+        <a href="/instructor/courses" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
                 </div>
-            </a>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">My Courses</p>
+                    <p class="text-xs text-gray-500 mt-1">View enrolled courses</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="/instructor/create-course" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Create Course</p>
+                    <p class="text-xs text-gray-500 mt-1">Create a new course</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="/instructor/dashboard" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Dashboard</p>
+                    <p class="text-xs text-gray-500 mt-1">Manage your courses</p>
+                </div>
+            </div>
+        </a>
+        {{/if}}
+
+        {{#if (eq authUser.permission_level 3)}}
+        <a href="/admin/dashboard" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">My Courses</p>
+                    <p class="text-xs text-gray-500 mt-1">View enrolled courses</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="/admin/categories" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Watchlist</p>
+                    <p class="text-xs text-gray-500 mt-1">Saved courses</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="/admin/courses" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Browse</p>
+                    <p class="text-xs text-gray-500 mt-1">Explore courses</p>
+                </div>
+            </div>
+        </a>
+        <a href="/admin/users" 
+           class="block p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-all">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Browse</p>
+                    <p class="text-xs text-gray-500 mt-1">Explore courses</p>
+                </div>
+            </div>
+        </a>
         {{/if}}
     </div>
-
-
 </div>
 
 {{#section 'js'}}

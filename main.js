@@ -67,6 +67,9 @@ app.engine('handlebars', engine({
     or(a, b) {
       return a || b;
     },
+    and(a, b) {
+      return a && b;
+    },
     gt(a, b) {
       return a > b;
     },
