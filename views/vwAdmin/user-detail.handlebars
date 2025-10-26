@@ -1,0 +1,306 @@
+<div class="max-w-7xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm">
+        <ol class="flex items-center space-x-2 text-gray-600">
+            <li><a href="/admin/dashboard" class="hover:text-indigo-600">Dashboard</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li><a href="/admin/users" class="hover:text-indigo-600">Users</a></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="text-gray-900 font-semibold">{{user.name}}</li>
+        </ol>
+    </nav>
+
+    <!-- User Profile Header -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+        <div class="p-6 bg-gradient-to-r from-indigo-600 to-purple-600">
+            <div class="flex items-center space-x-6">
+                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center text-indigo-600 text-4xl font-bold shadow-lg">
+                    {{substring user.name 0 1}}
+                </div>
+                <div class="text-white">
+                    <h1 class="text-3xl font-bold">{{user.name}}</h1>
+                    <p class="text-indigo-100 text-lg mt-1">@{{user.username}}</p>
+                    <div class="flex items-center space-x-3 mt-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                            {{#if (eq user.permission_level 1)}}bg-green-500 text-white
+                            {{else if (eq user.permission_level 2)}}bg-purple-500 text-white
+                            {{else}}bg-red-500 text-white{{/if}}">
+                            {{#if (eq user.permission_level 1)}}Student
+                            {{else if (eq user.permission_level 2)}}Instructor
+                            {{else}}Admin{{/if}}
+                        </span>
+                        {{#if user.is_verified}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-white text-green-600">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Verified
+                            </span>
+                        {{else}}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-500 text-white">
+                                Unverified
+                            </span>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 border-b">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-sm text-gray-500">Email</p>
+                    <p class="text-base font-semibold text-gray-900 mt-1">{{user.email}}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Date of Birth</p>
+                    <p class="text-base font-semibold text-gray-900 mt-1">{{user.dob}}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Member Since</p>
+                    <p class="text-base font-semibold text-gray-900 mt-1">{{user.created_at}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-gray-50">
+            <div class="flex space-x-3">
+                <button onclick="changeUserRole({{user.id}}, '{{user.name}}', {{user.permission_level}})"
+                        class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+                    Change Role
+                </button>
+                <button onclick="toggleVerification({{user.id}}, {{user.is_verified}})"
+                        class="px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition">
+                    {{#if user.is_verified}}Unverify{{else}}Verify{{/if}}
+                </button>
+                <button onclick="deleteUser({{user.id}}, '{{user.name}}')"
+                        class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
+                    Delete User
+                </button>
+                <a href="/admin/users"
+                   class="ml-auto px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition">
+                    Back to Users
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Enrollments</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{enrollmentCount}}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Reviews</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{reviewCount}}</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <svg class="w-8 h-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        {{#if instructorStats}}
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Courses Created</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{instructorStats.totalCourses}}</p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-full">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+    </div>
+
+    {{#if instructorStats}}
+    <!-- Instructor Statistics -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Instructor Statistics</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-indigo-600">{{instructorStats.totalCourses}}</p>
+                <p class="text-sm text-gray-600 mt-1">Total Courses</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-green-600">{{instructorStats.totalStudents}}</p>
+                <p class="text-sm text-gray-600 mt-1">Total Students</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-yellow-600">{{instructorStats.averageRating}}</p>
+                <p class="text-sm text-gray-600 mt-1">Average Rating</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-purple-600">{{instructorStats.totalReviews}}</p>
+                <p class="text-sm text-gray-600 mt-1">Total Reviews</p>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- Activity Log (Optional - can be implemented later) -->
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
+        <div class="text-center py-8 text-gray-500">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <p class="mt-2">Activity log feature coming soon</p>
+        </div>
+    </div>
+</div>
+
+{{#section 'js'}}
+<script>
+// Reuse the same functions from users.handlebars
+async function changeUserRole(userId, userName, currentRole) {
+    const { value: newRole } = await Swal.fire({
+        title: `Change Role for ${userName}`,
+        input: 'select',
+        inputOptions: {
+            '1': 'Student',
+            '2': 'Instructor',
+            '3': 'Admin'
+        },
+        inputValue: currentRole,
+        showCancelButton: true,
+        confirmButtonColor: '#4F46E5',
+        confirmButtonText: 'Change Role',
+        inputValidator: (value) => {
+            if (!value) return 'Please select a role';
+        }
+    });
+
+    if (!newRole || newRole == currentRole) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/update-role`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permission_level: newRole })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => location.reload());
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to change role',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+async function toggleVerification(userId, isVerified) {
+    const action = isVerified ? 'unverify' : 'verify';
+    
+    const result = await Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} User?`,
+        text: `Are you sure you want to ${action} this user?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: isVerified ? '#F59E0B' : '#10B981',
+        confirmButtonText: `Yes, ${action}`
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/toggle-verification`, {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => location.reload());
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to toggle verification',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+async function deleteUser(userId, userName) {
+    const result = await Swal.fire({
+        title: 'Delete User?',
+        html: `Are you sure you want to delete:<br><strong>${userName}</strong>?<br><br><small class="text-red-600">This action cannot be undone!</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        confirmButtonText: 'Yes, delete user'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/delete`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'User has been deleted.',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                window.location.href = '/admin/users';
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to delete user',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+</script>
+{{/section}}

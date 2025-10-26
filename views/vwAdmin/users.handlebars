@@ -1,0 +1,473 @@
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Manage Users</h1>
+                <p class="mt-2 text-gray-600">Manage students, instructors, and administrators</p>
+            </div>
+            <button onclick="showCreateInstructorModal()" 
+                    class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-md flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create Instructor
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="bg-white rounded-xl shadow-md mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+                <a href="/admin/users" 
+                   class="px-6 py-4 text-sm font-medium border-b-2 {{#unless currentRole}}border-indigo-500 text-indigo-600{{else}}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{/unless}}">
+                    All Users ({{pagination.total}})
+                </a>
+                <a href="/admin/users?role=1" 
+                   class="px-6 py-4 text-sm font-medium border-b-2 {{#if (eq currentRole '1')}}border-green-500 text-green-600{{else}}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{/if}}">
+                    Students 
+                </a>
+                <a href="/admin/users?role=2" 
+                   class="px-6 py-4 text-sm font-medium border-b-2 {{#if (eq currentRole '2')}}border-purple-500 text-purple-600{{else}}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{/if}}">
+                    Instructors 
+                </a>
+                <a href="/admin/users?role=3" 
+                   class="px-6 py-4 text-sm font-medium border-b-2 {{#if (eq currentRole '3')}}border-red-500 text-red-600{{else}}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{{/if}}">
+                    Admins 
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            User
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Email
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Role
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Joined
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {{#each users}}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                    {{substring this.name 0 1}}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-900">{{this.name}}</div>
+                                    <div class="text-xs text-gray-500">@{{this.username}}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{this.email}}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {{#if (eq this.permission_level 1)}}bg-green-100 text-green-800
+                                {{else if (eq this.permission_level 2)}}bg-purple-100 text-purple-800
+                                {{else}}bg-red-100 text-red-800{{/if}}">
+                                {{#if (eq this.permission_level 1)}}Student
+                                {{else if (eq this.permission_level 2)}}Instructor
+                                {{else}}Admin{{/if}}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{#if this.is_verified}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Verified
+                                </span>
+                            {{else}}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    Unverified
+                                </span>
+                            {{/if}}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{this.created_at}}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a href="/admin/users/{{this.id}}" 
+                               class="text-indigo-600 hover:text-indigo-900 mr-3"
+                               title="View Details">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+                            <button onclick="changeUserRole({{this.id}}, '{{this.name}}', {{this.permission_level}})" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3"
+                                    title="Change Role">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                            </button>
+                            <button onclick="toggleVerification({{this.id}}, {{this.is_verified}})" 
+                                    class="text-yellow-600 hover:text-yellow-900 mr-3"
+                                    title="Toggle Verification">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteUser({{this.id}}, '{{this.name}}')" 
+                                    class="text-red-600 hover:text-red-900"
+                                    title="Delete User">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+
+        {{#unless users.length}}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+        </div>
+        {{/unless}}
+    </div>
+
+    <!-- Pagination -->
+    {{#if (gt pagination.totalPages 1)}}
+    <nav aria-label="Page navigation" class="mt-6 flex justify-center">
+        <ul class="inline-flex items-center space-x-2">
+            <li>
+                <a href="?page={{sub pagination.page 1}}{{#if currentRole}}&role={{currentRole}}{{/if}}" 
+                   class="px-3 py-2 rounded-lg border text-sm font-medium {{#if (gt pagination.page 1)}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+                    ‹ Prev
+                </a>
+            </li>
+            {{#each pagination.pageNumbers}}
+            <li>
+                <a href="?page={{this.value}}{{#if ../currentRole}}&role={{../currentRole}}{{/if}}" 
+                   class="px-3 py-2 rounded-lg border text-sm font-medium {{#if this.isCurrent}}bg-indigo-600 text-white border-indigo-600{{else}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{/if}}">
+                    {{this.value}}
+                </a>
+            </li>
+            {{/each}}
+            <li>
+                <a href="?page={{add pagination.page 1}}{{#if currentRole}}&role={{currentRole}}{{/if}}" 
+                   class="px-3 py-2 rounded-lg border text-sm font-medium {{#if (lt pagination.page pagination.totalPages)}}text-indigo-700 bg-white hover:bg-gray-100 border-gray-300{{else}}text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed{{/if}}">
+                    Next ›
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {{/if}}
+</div>
+
+<!-- Create Instructor Modal -->
+<div id="instructorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Create Instructor Account</h2>
+            <form id="instructorForm" class="space-y-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Username <span class="text-red-500">*</span>
+                        </label>
+                        <input id="instructorUsername" type="text" required maxlength="50"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Full Name <span class="text-red-500">*</span>
+                        </label>
+                        <input id="instructorName" type="text" required maxlength="100"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input id="instructorEmail" type="email" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Password <span class="text-red-500">*</span>
+                        </label>
+                        <input id="instructorPassword" type="password" required minlength="6"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Date of Birth <span class="text-red-500">*</span>
+                        </label>
+                        <input id="instructorDob" type="date" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                    </div>
+                </div>
+
+                <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <p class="text-sm text-purple-800">
+                        <strong>Note:</strong> The instructor account will be created with pre-verified status. 
+                        The instructor can log in immediately and start creating courses.
+                    </p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeInstructorModal()"
+                            class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Create Instructor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{#section 'js'}}
+<script>
+// Show Create Instructor Modal
+function showCreateInstructorModal() {
+    document.getElementById('instructorForm').reset();
+    document.getElementById('instructorModal').classList.remove('hidden');
+}
+
+// Close Modal
+function closeInstructorModal() {
+    document.getElementById('instructorModal').classList.add('hidden');
+}
+
+// Submit Instructor Form
+document.getElementById('instructorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = {
+        username: document.getElementById('instructorUsername').value.trim(),
+        name: document.getElementById('instructorName').value.trim(),
+        email: document.getElementById('instructorEmail').value.trim(),
+        password: document.getElementById('instructorPassword').value,
+        dob: document.getElementById('instructorDob').value
+    };
+
+    try {
+        const response = await fetch('/admin/users/create-instructor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: result.message,
+                icon: 'success',
+                confirmButtonColor: '#7C3AED'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to create instructor',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+});
+
+// Change User Role
+async function changeUserRole(userId, userName, currentRole) {
+    const { value: newRole } = await Swal.fire({
+        title: `Change Role for ${userName}`,
+        input: 'select',
+        inputOptions: {
+            '1': 'Student',
+            '2': 'Instructor',
+            '3': 'Admin'
+        },
+        inputValue: currentRole,
+        showCancelButton: true,
+        confirmButtonColor: '#4F46E5',
+        confirmButtonText: 'Change Role',
+        inputValidator: (value) => {
+            if (!value) {
+                return 'Please select a role';
+            }
+        }
+    });
+
+    if (!newRole || newRole == currentRole) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/update-role`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ permission_level: newRole })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to change role',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+// Toggle Verification
+async function toggleVerification(userId, isVerified) {
+    const action = isVerified ? 'unverify' : 'verify';
+    
+    const result = await Swal.fire({
+        title: `${action.charAt(0).toUpperCase() + action.slice(1)} User?`,
+        text: `Are you sure you want to ${action} this user?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: isVerified ? '#F59E0B' : '#10B981',
+        confirmButtonText: `Yes, ${action}`
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/toggle-verification`, {
+            method: 'POST'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to toggle verification',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+// Delete User
+async function deleteUser(userId, userName) {
+    const result = await Swal.fire({
+        title: 'Delete User?',
+        html: `Are you sure you want to delete:<br><strong>${userName}</strong>?<br><br><small class="text-red-600">This action cannot be undone!</small>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete user'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/users/${userId}/delete`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'User has been deleted.',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to delete user',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeInstructorModal();
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('instructorModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'instructorModal') {
+        closeInstructorModal();
+    }
+});
+</script>
+{{/section}}

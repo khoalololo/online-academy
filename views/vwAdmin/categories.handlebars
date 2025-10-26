@@ -1,0 +1,347 @@
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Manage Categories</h1>
+                <p class="mt-2 text-gray-600">Organize your course categories</p>
+            </div>
+            <button onclick="showCreateCategoryModal()" 
+                    class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-md flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Category
+            </button>
+        </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Courses
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Subcategories
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {{#each categories}}
+                    <!-- Parent Category -->
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                </svg>
+                                <span class="text-sm font-bold text-gray-900">{{this.name}}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                Parent
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{this.course_count}} courses
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{this.subcategories.length}} subcategories
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="editCategory({{this.id}}, '{{this.name}}', null)" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3"
+                                    title="Edit">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteCategory({{this.id}}, '{{this.name}}', {{this.course_count}}, {{this.subcategories.length}})" 
+                                    class="text-red-600 hover:text-red-900"
+                                    title="Delete">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Subcategories -->
+                    {{#each this.subcategories}}
+                    <tr class="hover:bg-gray-50 transition-colors bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center pl-8">
+                                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span class="text-sm text-gray-700">{{this.name}}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+                                Subcategory
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{this.course_count}} courses
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            —
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="editCategory({{this.id}}, '{{this.name}}', {{../this.id}})" 
+                                    class="text-blue-600 hover:text-blue-900 mr-3"
+                                    title="Edit">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <button onclick="deleteCategory({{this.id}}, '{{this.name}}', {{this.course_count}}, 0)" 
+                                    class="text-red-600 hover:text-red-900"
+                                    title="Delete">
+                                <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </td>
+                    </tr>
+                    {{/each}}
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+
+        {{#unless categories.length}}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No categories</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new category.</p>
+            <div class="mt-6">
+                <button onclick="showCreateCategoryModal()" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Category
+                </button>
+            </div>
+        </div>
+        {{/unless}}
+    </div>
+</div>
+
+<!-- Create/Edit Category Modal -->
+<div id="categoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+        <div class="p-6">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Category</h2>
+            <form id="categoryForm" class="space-y-5">
+                <input type="hidden" id="categoryId">
+
+                <!-- Category Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Category Name <span class="text-red-500">*</span>
+                    </label>
+                    <input id="categoryName" type="text" required maxlength="100"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                           placeholder="e.g., Programming">
+                </div>
+
+                <!-- Parent Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Parent Category
+                    </label>
+                    <select id="parentCategory"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white">
+                        <option value="">None (Parent Category)</option>
+                        {{#each categories}}
+                        <option value="{{this.id}}">{{this.name}}</option>
+                        {{/each}}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Leave empty to create a parent category</p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeCategoryModal()"
+                            class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Save Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{#section 'js'}}
+<script>
+// Show Create Modal
+function showCreateCategoryModal() {
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryForm').reset();
+    document.getElementById('modalTitle').textContent = 'Add Category';
+    document.getElementById('categoryModal').classList.remove('hidden');
+}
+
+// Show Edit Modal
+function editCategory(id, name, parentId) {
+    document.getElementById('categoryId').value = id;
+    document.getElementById('categoryName').value = name;
+    document.getElementById('parentCategory').value = parentId || '';
+    document.getElementById('modalTitle').textContent = 'Edit Category';
+    document.getElementById('categoryModal').classList.remove('hidden');
+}
+
+// Close Modal
+function closeCategoryModal() {
+    document.getElementById('categoryModal').classList.add('hidden');
+}
+
+// Submit Form
+document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const categoryId = document.getElementById('categoryId').value;
+    const name = document.getElementById('categoryName').value.trim();
+    const parent_id = document.getElementById('parentCategory').value || null;
+
+    const method = categoryId ? 'PUT' : 'POST';
+    const url = categoryId 
+        ? `/admin/categories/${categoryId}/update`
+        : '/admin/categories/create';
+
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, parent_id })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: data.message,
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to save category',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+});
+
+// Delete Category
+async function deleteCategory(id, name, courseCount, subCount) {
+    // Check if can delete
+    if (courseCount > 0) {
+        Swal.fire({
+            title: 'Cannot Delete',
+            html: `Category <strong>${name}</strong> has <strong>${courseCount}</strong> course(s).<br><br>Please move or delete the courses first.`,
+            icon: 'warning',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
+
+    if (subCount > 0) {
+        Swal.fire({
+            title: 'Cannot Delete',
+            html: `Category <strong>${name}</strong> has <strong>${subCount}</strong> subcategory(ies).<br><br>Please delete subcategories first.`,
+            icon: 'warning',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
+
+    const result = await Swal.fire({
+        title: 'Delete Category?',
+        html: `Are you sure you want to delete:<br><strong>${name}</strong>?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Yes, delete it'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        const response = await fetch(`/admin/categories/${id}/delete`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Deleted!',
+                text: 'Category has been deleted.',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5'
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (error) {
+        Swal.fire({
+            title: 'Error!',
+            text: error.message || 'Failed to delete category',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+}
+
+// Close modal on Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeCategoryModal();
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('categoryModal').addEventListener('click', (e) => {
+    if (e.target.id === 'categoryModal') {
+        closeCategoryModal();
+    }
+});
+</script>
+{{/section}}
