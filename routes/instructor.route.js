@@ -105,7 +105,7 @@ router.post('/courses/create', async (req, res) => {
     
     const newCourse = await courseModel.createByInstructor(courseData);
     
-    res.redirect(`/instructor/courses`);
+    res.redirect(`/instructor/courses/${newCourse.proid}/lessons`);
   } catch (error) {
     console.error('Course creation error:', error);
     const categories = await categoryModel.getHierarchicalMenu();
@@ -442,6 +442,35 @@ router.post('/lessons/:proid/reorder', async (req, res) => {
     res.status(400).json({ 
       success: false, 
       message: error.message || 'Failed to reorder lessons' 
+    });
+  }
+});
+
+router.post('/courses/:proid/completion', async (req, res) => {
+  try {
+    const proid = +req.params.proid;
+    const instructorId = req.session.authUser.id;
+    const { is_completed } = req.body;
+
+    const course = await courseModel.findById(proid);
+    if (!course || course.instructor_id !== instructorId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
+
+    await courseModel.updateCompletionStatus(proid, is_completed);
+
+    res.json({
+      success: true,
+      message: `Course marked as ${is_completed ? 'complete' : 'incomplete'} successfully`
+    });
+  } catch (error) {
+    console.error('Course completion toggle error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to update course completion status'
     });
   }
 });

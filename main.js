@@ -3,6 +3,7 @@ import { engine } from 'express-handlebars';
 import session from 'express-session';
 import path from 'path';
 import sections from 'express-handlebars-sections'; 
+import moment from 'moment';
 // --- Model Imports ---
 import categoryModel from './models/category.model.js';
 import courseModel from './models/course.model.js';
@@ -118,7 +119,8 @@ app.engine('handlebars', engine({
         const num = parseFloat(value);
         if (isNaN(num)) return '0.0';
         return num.toFixed(decimals || 1);
-    }    
+    },
+    formatDate: (date) => moment(date).format('MMM DD, YYYY')    
     // Add other helpers if needed
     
   }

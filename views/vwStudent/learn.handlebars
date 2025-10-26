@@ -15,48 +15,70 @@
         <div class="lg:col-span-2 space-y-6">
             <!-- Video Player Section -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div id="videoContainer" class="relative bg-black aspect-video">
-                    {{#if lessons.0.video_url}}
-                        <iframe 
-                            id="courseVideo"
-                            class="w-full h-full"
-                            src="{{lessons.0.video_url}}"
-                            frameborder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen>
-                        </iframe>
-                    {{else}}
-                        <div class="flex items-center justify-center h-full">
-                            <div class="text-center text-white">
-                                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                                <p class="mt-4 text-lg">No video available</p>
-                            </div>
-                        </div>
-                    {{/if}}
+                <div id="videoContainer" class="w-full aspect-video bg-black rounded-xl overflow-hidden">
+                {{#if firstLesson.video_url}}
+                    <iframe 
+                    id="courseVideo"
+                    class="w-full h-full"
+                    src="{{firstLesson.video_url}}"
+                    frameborder="0"
+                    allowfullscreen>
+                    </iframe>
+                {{else}}
+                    <div class="flex items-center justify-center h-full text-center text-white">
+                    <div>
+                        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <p class="mt-4 text-lg text-gray-300">No video available</p>
+                    </div>
+                    </div>
+                {{/if}}
                 </div>
 
                 <!-- Video Info -->
                 <div class="p-6">
-                    <h1 id="currentLessonTitle" class="text-2xl font-bold text-gray-900 mb-2">
-                        {{#if firstLesson}}{{firstLesson.title}}{{else}}Welcome to the Course{{/if}}
-                    </h1>
-                    <p id="currentLessonDescription" class="text-gray-600">
-                        {{#if firstLesson}}{{firstLesson.description}}{{/if}}
-                    </p>
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h1 id="currentLessonTitle" class="text-2xl font-bold text-gray-900 mb-2">
+                                {{#if firstLesson}}{{firstLesson.title}}{{else}}Welcome to the Course{{/if}}
+                            </h1>
+                            <p id="currentLessonDescription" class="text-gray-600">
+                                {{#if firstLesson}}{{firstLesson.description}}{{/if}}
+                            </p>
+                        </div>
+                        
+                        <!-- Mark Complete Button -->
+                        <div class="ml-4">
+                            <button 
+                            id="completeButton"
+                            data-lesson-id="{{firstLesson.id}}"
+                            data-is-completed="{{#if firstLesson.is_completed}}true{{else}}false{{/if}}"
+                            onclick="toggleLessonComplete(this)"
+                            class="px-6 py-3 rounded-lg font-semibold transition-colors flex items-center 
+                                    {{#if firstLesson.is_completed}}bg-green-600 hover:bg-green-700 text-white
+                                    {{else}}bg-gray-200 hover:bg-gray-300 text-gray-700{{/if}}">
+                            <svg id="completeIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span id="completeText">{{#if firstLesson.is_completed}}Completed{{else}}Mark Complete{{/if}}</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- Course Progress -->
                     <div class="mt-6">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-gray-700">Course Progress</span>
-                            <span class="text-sm font-semibold text-indigo-600">{{progress}}%</span>
+                            <span id="progressPercentage" class="text-sm font-semibold text-indigo-600">{{progress}}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: {{progress}}%"></div>
+                            <div id="progressBar" class="bg-indigo-600 h-3 rounded-full transition-all duration-300" style="width: {{progress}}%"></div>
                         </div>
                         <p class="text-xs text-gray-500 mt-2">
-                            {{completedLessons}} of {{totalLessons}} lessons completed
+                            <span id="completedCount">{{completedLessons}}</span> of {{totalLessons}} lessons completed
                         </p>
                     </div>
 
@@ -64,11 +86,11 @@
                     <div class="mt-6 flex items-center space-x-4">
                         {{#if (eq progress 100)}}
                             <button onclick="completeCourse()" 
-                                    class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
-                                <svg class="inline w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                Mark as Complete
+                                Get Certificate
                             </button>
                         {{/if}}
                         <a href="/products/{{course.proid}}" 
@@ -93,28 +115,35 @@
             <div class="bg-white rounded-xl shadow-lg overflow-hidden sticky top-20">
                 <div class="p-6 bg-indigo-600 text-white">
                     <h2 class="text-xl font-bold">Course Content</h2>
-                    <p class="text-sm mt-1 text-indigo-100">{{totalLessons}} lessons</p>
+                    <p class="text-sm mt-1 text-indigo-100">{{totalLessons}} lessons • {{completedLessons}} completed</p>
                 </div>
 
                 <div class="max-h-[600px] overflow-y-auto">
                     {{#if lessons.length}}
                         {{#each lessons}}
-                        <div class="lesson-item border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                        <div class="lesson-item border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer {{#if this.is_completed}}bg-green-50{{/if}}"
                              data-lesson-id="{{this.id}}"
                              data-video-url="{{this.video_url}}"
                              data-title="{{this.title}}"
                              data-description="{{this.description}}"
+                             data-is-completed="{{this.is_completed}}"
                              onclick="loadLesson(this)">
                             <div class="p-4">
                                 <div class="flex items-start">
                                     <div class="flex-shrink-0 mt-1">
-                                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
+                                        {{#if this.is_completed}}
+                                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                        {{else}}
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        {{/if}}
                                     </div>
                                     <div class="ml-3 flex-1">
-                                        <h3 class="text-sm font-semibold text-gray-900">
+                                        <h3 class="text-sm font-semibold text-gray-900 {{#if this.is_completed}}line-through text-gray-600{{/if}}">
                                             Lesson {{add @index 1}}: {{this.title}}
                                         </h3>
                                         {{#if this.description}}
@@ -122,10 +151,18 @@
                                         {{/if}}
                                         <div class="flex items-center mt-2 space-x-3 text-xs text-gray-500">
                                             {{#if this.duration}}
-                                                <span>{{div this.duration 60}} min</span>
+                                                <span class="flex items-center">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    {{div this.duration 60}} min
+                                                </span>
                                             {{/if}}
                                             {{#if this.is_preview}}
                                                 <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">Preview</span>
+                                            {{/if}}
+                                            {{#if this.is_completed}}
+                                                <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">✓ Done</span>
                                             {{/if}}
                                         </div>
                                     </div>
@@ -149,75 +186,251 @@
 
 {{#section 'js'}}
 <script>
-// Load a lesson when clicked
+/*
+  Robust learning page script:
+  - loadLesson: replace iframe when no video_url
+  - toggleLessonComplete: toggle complete/incomplete via endpoints, update UI safely
+  - defensive DOM checks to avoid "icon is null" errors
+*/
+
+let currentLessonId = {{#if firstLesson}}{{firstLesson.id}}{{else}}null{{/if}};
+
+function buildVideoHTML(videoUrl) {
+  return `
+    <iframe 
+      id="courseVideo"
+      class="w-full h-full"
+      src="${videoUrl}"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen>
+    </iframe>`;
+}
+
+function buildNoVideoHTML() {
+  return `
+    <div class="flex items-center justify-center h-full text-center text-white">
+      <div>
+        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
+        <p class="mt-4 text-lg text-gray-300">No video available</p>
+      </div>
+    </div>`;
+}
+
+function safeTextSet(el, text) {
+  if (!el) return;
+  el.textContent = text ?? '';
+}
+
+function updateCompleteButtonAppearance(button, isCompleted) {
+  if (!button) return;
+  const textEl = button.querySelector('#completeText') || document.getElementById('completeText');
+  const iconEl = button.querySelector('#completeIcon') || document.getElementById('completeIcon');
+
+  // Toggle classes defensively
+  button.classList.remove('bg-green-600', 'hover:bg-green-700', 'text-white', 'bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+  if (isCompleted) {
+    button.classList.add('bg-green-600', 'hover:bg-green-700', 'text-white');
+    safeTextSet(textEl, 'Completed');
+    if (iconEl) {
+      iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>';
+    }
+  } else {
+    button.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+    safeTextSet(textEl, 'Mark Complete');
+    if (iconEl) {
+      // a generic "check" or "play" icon path; keep it safe
+      iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>';
+    }
+  }
+}
+
+function updateLessonItemUI(lessonId, isCompleted) {
+  const lessonItem = document.querySelector(`[data-lesson-id="${lessonId}"]`);
+  if (!lessonItem) return;
+
+  lessonItem.dataset.isCompleted = isCompleted.toString();
+
+  // toggle bg
+  if (isCompleted === true || isCompleted === 'true') {
+    lessonItem.classList.add('bg-green-50');
+  } else {
+    lessonItem.classList.remove('bg-green-50');
+  }
+
+  // update icon safely (look for the first svg inside)
+  const svgIcon = lessonItem.querySelector('svg');
+  if (!svgIcon) return;
+
+  if (isCompleted === true || isCompleted === 'true') {
+    svgIcon.outerHTML = `<svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+    </svg>`;
+  } else {
+    svgIcon.outerHTML = `<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>`;
+  }
+}
+
+// loadLesson: safe DOM updates + replace iframe with placeholder when absent
 function loadLesson(element) {
-    const videoUrl = element.dataset.videoUrl;
-    const title = element.dataset.title;
-    const description = element.dataset.description;
+  if (!element) return;
 
-    // Update video player
-    const videoContainer = document.getElementById('courseVideo');
-    if (videoContainer && videoUrl) {
-        videoContainer.src = videoUrl;
+  const videoUrl = element.dataset.videoUrl;
+  const title = element.dataset.title;
+  const description = element.dataset.description;
+  const lessonId = element.dataset.lessonId;
+  const isCompleted = (element.dataset.isCompleted === 'true' || element.dataset.isCompleted === true);
+
+  currentLessonId = lessonId;
+
+  // Video container wrapper (we replace innerHTML)
+  const videoWrapper = document.getElementById('videoContainer');
+  if (videoWrapper) {
+    if (videoUrl && videoUrl.trim() !== '') {
+      videoWrapper.innerHTML = buildVideoHTML(videoUrl);
+    } else {
+      videoWrapper.innerHTML = buildNoVideoHTML();
     }
+  }
 
-    // Update lesson info
-    document.getElementById('currentLessonTitle').textContent = title;
-    document.getElementById('currentLessonDescription').textContent = description || '';
+  // Update text fields
+  safeTextSet(document.getElementById('currentLessonTitle'), title ?? 'Untitled Lesson');
+  safeTextSet(document.getElementById('currentLessonDescription'), description ?? '');
 
-    // Highlight active lesson
-    document.querySelectorAll('.lesson-item').forEach(item => {
-        item.classList.remove('bg-indigo-50', 'border-l-4', 'border-indigo-600');
-    });
-    element.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-600');
+  // Update complete button dataset and appearance
+  const completeButton = document.getElementById('completeButton');
+  if (completeButton) {
+    completeButton.dataset.lessonId = lessonId ?? '';
+    completeButton.dataset.isCompleted = isCompleted.toString();
+    updateCompleteButtonAppearance(completeButton, isCompleted);
+  }
 
-    // Scroll to top of video
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // highlight active lesson visually
+  document.querySelectorAll('.lesson-item').forEach(item => {
+    item.classList.remove('bg-indigo-50', 'border-l-4', 'border-indigo-600');
+  });
+  element.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-600');
+
+  // scroll
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Mark course as complete
+// toggleLessonComplete: robust toggle & sync UI
+async function toggleLessonComplete(button) {
+  if (!button) return;
+
+  // fallback to currentLessonId if dataset missing
+  const lessonId = button.dataset.lessonId || currentLessonId;
+  if (!lessonId) {
+    return Swal.fire({ title: 'Error', text: 'No lesson selected', icon: 'error' });
+  }
+
+  const currentlyCompleted = (button.dataset.isCompleted === 'true' || button.dataset.isCompleted === true);
+  const endpoint = currentlyCompleted
+    ? `/student/lessons/${lessonId}/incomplete`
+    : `/student/lessons/${lessonId}/complete`;
+
+  try {
+    const resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(data.message || 'Failed to update lesson status');
+    }
+
+    // use returned progress if available, otherwise no progress update
+    const newProgress = typeof data.progress !== 'undefined' ? data.progress : null;
+
+    // Toggle dataset on the button and update appearance
+    button.dataset.isCompleted = (!currentlyCompleted).toString();
+    updateCompleteButtonAppearance(button, !currentlyCompleted);
+
+    // Update sidebar lesson item UI
+    updateLessonItemUI(lessonId, !currentlyCompleted);
+
+    // Update progress bar if backend returned value
+    if (newProgress !== null) {
+      updateProgress(newProgress);
+    }
+
+    // Small toast
+    const message = !currentlyCompleted ? 'Lesson marked as complete! 🎉' : 'Lesson marked as incomplete';
+    Swal.fire({ title: 'Success', text: message, icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+  } catch (err) {
+    console.error('toggleLessonComplete error:', err);
+    Swal.fire({ title: 'Error', text: err.message || 'Something went wrong', icon: 'error' });
+  }
+}
+
+function updateProgress(percentage) {
+  const progressBar = document.getElementById('progressBar');
+  const progressPercentage = document.getElementById('progressPercentage');
+  const totalLessons = Number({{totalLessons}}) || 0;
+
+  if (progressBar) progressBar.style.width = percentage + '%';
+  if (progressPercentage) progressPercentage.textContent = percentage + '%';
+
+  if (totalLessons > 0) {
+    const completedCount = Math.round((percentage / 100) * totalLessons);
+    const completedCountEl = document.getElementById('completedCount');
+    if (completedCountEl) completedCountEl.textContent = completedCount;
+  }
+}
+
+// completeCourse (existing behavior) - keep as-is but defensive
 async function completeCourse() {
-    try {
-        const response = await fetch(`/student/learn/{{course.proid}}/complete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
+  try {
+    const response = await fetch(`/student/learn/{{course.proid}}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await response.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
-            Swal.fire({
-                title: 'Congratulations! 🎉',
-                text: data.message,
-                icon: 'success',
-                confirmButtonColor: '#4F46E5'
-            }).then(() => {
-                window.location.href = '/student/enrolled';
-            });
-        } else {
-            Swal.fire({
-                title: 'Error!',
-                text: data.message || 'Failed to mark course as complete.',
-                icon: 'error',
-                confirmButtonColor: '#4F46E5'
-            });
-        }
-    } catch (error) {
-        Swal.fire({
-            title: 'Error!',
-            text: 'An error occurred. Please try again.',
-            icon: 'error',
-            confirmButtonColor: '#4F46E5'
-        });
+    if (response.ok) {
+      Swal.fire({
+        title: 'Congratulations! 🎉',
+        html: `<p class="text-lg mb-4">${data.message}</p><p class="text-gray-600">You have successfully completed:</p><p class="font-bold text-xl text-indigo-600 mt-2">{{course.proname}}</p>`,
+        icon: 'success',
+        confirmButtonText: 'View My Courses',
+        confirmButtonColor: '#4F46E5'
+      }).then(() => { window.location.href = '/student/enrolled'; });
+    } else {
+      Swal.fire({ title: 'Notice', text: data.message || 'Please complete all lessons first', icon: 'info', confirmButtonColor: '#4F46E5' });
     }
+  } catch (error) {
+    console.error('completeCourse error:', error);
+    Swal.fire({ title: 'Error!', text: 'An error occurred. Please try again.', icon: 'error', confirmButtonColor: '#4F46E5' });
+  }
 }
 
-// Highlight first lesson on load
+// Highlight first lesson on load (safe)
 window.addEventListener('DOMContentLoaded', function() {
-    const firstLesson = document.querySelector('.lesson-item');
-    if (firstLesson) {
-        firstLesson.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-600');
-    }
+  const firstLessonEl = document.querySelector('.lesson-item');
+  if (firstLessonEl) {
+    firstLessonEl.classList.add('bg-indigo-50', 'border-l-4', 'border-indigo-600');
+    // preload first lesson UI if necessary
+    // loadLesson(firstLessonEl); // optionally auto-load first lesson
+  }
+
+  // attach click handlers for dynamic items if not using inline onclick
+  document.querySelectorAll('.lesson-item').forEach(item => {
+    item.addEventListener('click', () => loadLesson(item));
+  });
+
+  // wire complete button (if present)
+  const completeButton = document.getElementById('completeButton');
+  if (completeButton) {
+    completeButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleLessonComplete(completeButton);
+    });
+  }
 });
 </script>
 {{/section}}

@@ -77,6 +77,7 @@ export default {
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.dob) updateData.dob = data.dob;
+    if (data.bio !== undefined) updateData.bio = data.bio;
 
     const [updated] = await db('users').where('id', userId).update(updateData).returning('*');
     return updated;
@@ -92,5 +93,45 @@ export default {
     const password_hash = await this.hashPassword(newPassword);
     await db('users').where('id', userId).update({ password_hash });
     return true;
+  },
+
+  async updateInstructorProfile(userId, data) {
+    const updateData = {};
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.dob !== undefined) updateData.dob = data.dob;
+    if (data.bio !== undefined) updateData.bio = data.bio;
+
+    const [updated] = await db('users')
+      .where('id', userId)
+      .update(updateData)
+      .returning('*');
+
+    return updated;
+  },
+
+  async getInstructorProfile(userId) {
+    return await db('users')
+      .where('id', userId)
+      .where('permission_level', PERMISSIONS.INSTRUCTOR)
+      .first();
+  },
+
+  async getInstructorPublicInfo(userId) {
+    const user = await db('users')
+      .select('id', 'name', 'email', 'bio')
+      .where('id', userId)
+      .first();
+
+    if (!user) return null;
+
+    // Instead of repeating all stats here,
+    // call the existing function in course.model.js
+    const courseModel = require('./course.model');
+    const stats = await courseModel.getInstructorStats(userId);
+
+    return { ...user, stats };
   }
+
 };

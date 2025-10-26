@@ -1,0 +1,482 @@
+<div class="max-w-7xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <nav class="mb-4 text-sm">
+      <ol class="flex items-center space-x-2 text-gray-600">
+        <li><a href="/instructor/courses" class="hover:text-indigo-600">My Courses</a></li>
+        <li><span class="mx-2">/</span></li>
+        <li class="text-gray-900 font-semibold">{{course.proname}}</li>
+      </ol>
+    </nav>
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Manage Lessons</h1>
+        <p class="mt-2 text-gray-600">{{course.proname}}</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="/instructor/courses/{{course.proid}}/edit"
+           class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+          Edit Course
+        </a>
+        <a href="/products/{{course.proid}}"
+           class="px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 transition-colors">
+          View Course
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Lessons List -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold">Course Content</h2>
+              <p class="text-sm text-indigo-100 mt-1">{{lessons.length}} lessons</p>
+            </div>
+            <div class="flex items-center space-x-4">
+              <button onclick="showAddLessonModal()"
+                    class="px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors flex items-center">
+              <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Lesson
+            </button>
+            <button id="toggleCompleteBtn"
+              class="px-4 py-2 rounded-lg font-semibold transition-colors"
+              style="background-color: {{#if course.is_completed}}#fff{{else}}#22c55e{{/if}}; color: {{#if course.is_completed}}#1e3a8a{{else}}#fff{{/if}};"
+              onclick="toggleCourseCompletion({{course.proid}}, {{#if course.is_completed}}false{{else}}true{{/if}})">
+              {{#if course.is_completed}}Mark as Incomplete{{else}}Mark as Complete{{/if}}
+            </button>
+            </div>
+          </div>
+
+          {{!-- Show notice if course is not marked complete --}}
+          {{#unless course.is_completed}}
+            <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg text-yellow-800 text-sm">
+              <p>
+                This course may not yet have all lessons or sections fully uploaded.
+                Its current status is <span class="font-semibold">Incomplete</span>.
+              </p>
+              <p class="mt-1 font-medium">
+                Mark as <span class="text-green-700 font-semibold">Complete</span> once all course content has been added.
+              </p>
+            </div>
+          {{/unless}}
+        </div>
+
+        <div id="lessonsList" class="divide-y divide-gray-200">
+          {{#if lessons.length}}
+            {{#each lessons}}
+            <div class="p-6 hover:bg-gray-50 transition-colors flex items-start justify-between group" data-lesson-id="{{this.id}}">
+              <div class="flex items-start space-x-4 flex-1">
+                <!-- Drag Handle -->
+                <div class="cursor-move text-gray-400 hover:text-gray-600 mt-1">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                  </svg>
+                </div>
+
+                <!-- Lesson Info -->
+                <div class="flex-1">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <h3 class="font-semibold text-gray-900">{{add @index 1}}. {{this.title}}</h3>
+                      {{#if this.description}}
+                        <p class="text-sm text-gray-600 mt-1">{{this.description}}</p>
+                      {{/if}}
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center mt-2 space-x-4 text-xs text-gray-500">
+                    {{#if this.duration}}
+                      <span class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{div this.duration 60}} min
+                      </span>
+                    {{/if}}
+                    {{#if this.is_preview}}
+                      <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
+                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        Preview
+                      </span>
+                    {{/if}}
+                    {{#if this.video_url}}
+                      <span class="flex items-center text-indigo-600">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Video attached
+                      </span>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="editLesson({{this.id}})"
+                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="Edit lesson">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </button>
+                <button onclick="deleteLesson({{this.id}}, '{{this.title}}')"
+                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Delete lesson">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {{/each}}
+          {{else}}
+            <div class="p-12 text-center text-gray-500">
+              <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <h3 class="mt-4 text-lg font-medium text-gray-900">No lessons yet</h3>
+              <p class="mt-2 text-gray-600">Click <strong>Add Lesson</strong> to start building your course content.</p>
+              <button onclick="showAddLessonModal()"
+                      class="mt-6 inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Your First Lesson
+              </button>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Info Sidebar -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-xl shadow-md p-6 sticky top-20">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Course Overview
+        </h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between items-center py-2 border-b">
+            <span class="text-gray-600">Total Lessons</span>
+            <span class="font-semibold text-gray-900">{{lessons.length}}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b">
+            <span class="text-gray-600">Category</span>
+            <span class="font-semibold text-gray-900">{{course.category_name}}</span>
+          </div>
+          <div class="flex justify-between items-center py-2">
+            <span class="text-gray-600">Last Updated</span>
+            <span class="font-semibold text-gray-900">{{course.last_updated}}</span>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h4 class="font-semibold text-blue-900 mb-2 flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Video URL Tips
+          </h4>
+          <ul class="text-xs text-blue-800 space-y-1">
+            <li>• Use YouTube embed URLs</li>
+            <li>• Format: youtube.com/embed/VIDEO_ID</li>
+            <li>• Or Vimeo: player.vimeo.com/video/ID</li>
+            <li>• Mark first lesson as Preview</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Lesson Modal -->
+<div id="lessonModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 mb-6">Add Lesson</h2>
+      <form id="lessonForm" class="space-y-5">
+        <input type="hidden" id="lessonId">
+
+        <!-- Title -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Lesson Title <span class="text-red-500">*</span>
+          </label>
+          <input id="lessonTitle" type="text" required maxlength="200"
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                 placeholder="e.g., Introduction to JavaScript">
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Description
+          </label>
+          <textarea id="lessonDescription" rows="3" maxlength="500"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    placeholder="Brief description of what students will learn..."></textarea>
+          <p class="text-xs text-gray-500 mt-1">Optional - helps students know what to expect</p>
+        </div>
+
+        <!-- Video URL -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Video URL <span class="text-red-500">*</span>
+          </label>
+          <input id="lessonVideoUrl" type="url" required
+                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                 placeholder="https://www.youtube.com/embed/VIDEO_ID">
+          <p class="text-xs text-gray-500 mt-1">
+            YouTube: <code class="bg-gray-100 px-1 rounded">youtube.com/embed/VIDEO_ID</code> |
+            Vimeo: <code class="bg-gray-100 px-1 rounded">player.vimeo.com/video/ID</code>
+          </p>
+        </div>
+
+        <!-- Duration and Preview -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Duration (minutes) <span class="text-red-500">*</span>
+            </label>
+            <input id="lessonDuration" type="number" min="0" step="0.5" required
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                   placeholder="15">
+            <p class="text-xs text-gray-500 mt-1">Approximate length in minutes</p>
+          </div>
+          <div class="flex items-center justify-center">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input id="lessonPreview" type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
+              <div>
+                <span class="text-sm font-medium text-gray-700">Preview Lesson</span>
+                <p class="text-xs text-gray-500">Free for all to view</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <button type="button" onclick="closeLessonModal()"
+                  class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+            Cancel
+          </button>
+          <button type="submit"
+                  class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Save Lesson
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{#section 'js'}}
+<script>
+// Show Add Lesson Modal
+function showAddLessonModal() {
+  document.getElementById('lessonId').value = '';
+  document.getElementById('lessonForm').reset();
+  document.getElementById('modalTitle').textContent = 'Add Lesson';
+  document.getElementById('lessonModal').classList.remove('hidden');
+}
+
+// Close Modal
+function closeLessonModal() {
+  document.getElementById('lessonModal').classList.add('hidden');
+}
+
+// Edit Lesson
+async function editLesson(id) {
+  try {
+    const response = await fetch(`/instructor/lessons/${id}/get`);
+    const lesson = await response.json();
+
+    document.getElementById('lessonId').value = lesson.id;
+    document.getElementById('lessonTitle').value = lesson.title || '';
+    document.getElementById('lessonDescription').value = lesson.description || '';
+    document.getElementById('lessonVideoUrl').value = lesson.video_url || '';
+    document.getElementById('lessonDuration').value = lesson.duration ? lesson.duration / 60 : '';
+    document.getElementById('lessonPreview').checked = !!lesson.is_preview;
+    
+    document.getElementById('modalTitle').textContent = 'Edit Lesson';
+    document.getElementById('lessonModal').classList.remove('hidden');
+  } catch (error) {
+    console.error('Error loading lesson:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: 'Failed to load lesson details',
+      icon: 'error',
+      confirmButtonColor: '#4F46E5'
+    });
+  }
+}
+
+// Delete Lesson
+async function deleteLesson(id, title) {
+  const result = await Swal.fire({
+    title: 'Delete Lesson?',
+    html: `Are you sure you want to delete:<br><strong>${title}</strong>?<br><br><small class="text-red-600">This action cannot be undone.</small>`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#EF4444',
+    cancelButtonColor: '#6B7280',
+    confirmButtonText: 'Yes, delete it',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await fetch(`/instructor/lessons/${id}/delete`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      Swal.fire({
+        title: 'Deleted!',
+        text: 'The lesson has been removed.',
+        icon: 'success',
+        confirmButtonColor: '#4F46E5'
+      }).then(() => {
+        location.reload();
+      });
+    } else {
+      throw new Error(data.message || 'Failed to delete lesson');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: error.message || 'Failed to delete lesson',
+      icon: 'error',
+      confirmButtonColor: '#4F46E5'
+    });
+  }
+}
+
+// Submit Lesson Form (Add or Update)
+document.getElementById('lessonForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const lessonId = document.getElementById('lessonId').value;
+  const durationMinutes = parseFloat(document.getElementById('lessonDuration').value);
+  
+  const payload = {
+    title: document.getElementById('lessonTitle').value.trim(),
+    description: document.getElementById('lessonDescription').value.trim(),
+    video_url: document.getElementById('lessonVideoUrl').value.trim(),
+    duration: Math.round(durationMinutes * 60), // Convert to seconds
+    is_preview: document.getElementById('lessonPreview').checked
+  };
+
+  // Validate video URL format
+  const videoUrl = payload.video_url;
+  const isYouTube = videoUrl.includes('youtube.com/embed/');
+  const isVimeo = videoUrl.includes('player.vimeo.com/video/');
+  
+  if (!isYouTube && !isVimeo) {
+    Swal.fire({
+      title: 'Invalid URL',
+      html: 'Please use a valid embed URL:<br><br>' +
+            '<strong>YouTube:</strong> https://www.youtube.com/embed/VIDEO_ID<br>' +
+            '<strong>Vimeo:</strong> https://player.vimeo.com/video/VIDEO_ID',
+      icon: 'warning',
+      confirmButtonColor: '#4F46E5'
+    });
+    return;
+  }
+
+  const method = lessonId ? 'PUT' : 'POST';
+  const url = lessonId 
+    ? `/instructor/lessons/${lessonId}/update` 
+    : `/instructor/lessons/{{course.proid}}/add`;
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      Swal.fire({
+        title: 'Success!',
+        text: lessonId ? 'Lesson updated successfully!' : 'Lesson created successfully!',
+        icon: 'success',
+        confirmButtonColor: '#4F46E5'
+      }).then(() => {
+        location.reload();
+      });
+    } else {
+      throw new Error(data.message || 'Failed to save lesson');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    Swal.fire({
+      title: 'Error!',
+      text: error.message || 'Failed to save lesson',
+      icon: 'error',
+      confirmButtonColor: '#4F46E5'
+    });
+  }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeLessonModal();
+  }
+});
+
+// Close modal when clicking outside
+document.getElementById('lessonModal').addEventListener('click', (e) => {
+  if (e.target.id === 'lessonModal') {
+    closeLessonModal();
+  }
+});
+async function toggleCourseCompletion(courseId, markComplete) {
+    try {
+      const res = await fetch(`/instructor/courses/${courseId}/completion`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_completed: markComplete })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert(result.message || 'Failed to update course status.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while updating course status.');
+    }
+  }
+</script>
+{{/section}}

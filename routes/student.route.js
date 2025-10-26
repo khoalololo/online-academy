@@ -4,12 +4,12 @@ import watchlistModel from '../models/watchlist.model.js';
 import courseModel from '../models/course.model.js';
 import lessonModel from '../models/lesson.model.js';
 import reviewModel from '../models/review.model.js';
+import lessonProgressModel from '../models/lesson-progress.model.js';
 import authMdw from '../middlewares/auth.mdw.js';
 
 const router = express.Router();
 router.use(authMdw.isAuthenticated);
 
-// [POST] /student/enroll/:proid - Enroll in a course
 router.post('/enroll/:proid', async (req, res) => {
   try {
     const proid = +req.params.proid;
@@ -31,11 +31,14 @@ router.post('/enroll/:proid', async (req, res) => {
   }
 });
 
-// [GET] /student/enrolled - View enrolled courses
 router.get('/enrolled', async (req, res) => {
   try {
     const userId = req.session.authUser.id;
     const enrolledCourses = await enrollmentModel.getByUser(userId);
+
+    for (const course of enrolledCourses) {
+      course.progress = await lessonProgressModel.getCourseCompletionPercentage(userId, course.proid);
+    }
 
     res.render('vwStudent/enrolled', {
       title: 'My Enrolled Courses',
@@ -50,13 +53,11 @@ router.get('/enrolled', async (req, res) => {
 
 // ==================== LEARNING PAGE ====================
 
-// [GET] /student/learn/:proid - Course learning page
 router.get('/learn/:proid', async (req, res) => {
   try {
     const proid = +req.params.proid;
     const userId = req.session.authUser.id;
 
-    // Check if user is enrolled
     const isEnrolled = await enrollmentModel.isEnrolled(userId, proid);
     if (!isEnrolled) {
       return res.redirect(`/products/${proid}`);
@@ -64,14 +65,14 @@ router.get('/learn/:proid', async (req, res) => {
 
     // Get course details
     const course = await courseModel.findById(proid);
-    const lessons = await lessonModel.getByCourse(proid);
+    const lessons = await lessonProgressModel.getLessonsWithProgress(userId, proid);    
+    
     const enrollments = await enrollmentModel.getByUser(userId);
     const currentEnrollment = enrollments.find(e => e.proid === proid);
 
-    // Calculate progress
     const totalLessons = lessons.length;
-    const completedLessons = 0; // TODO: Track lesson completion
-    const progress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+    const completedLessons = lessons.filter(l => l.is_completed).length;    
+    const progress = await lessonProgressModel.getCourseCompletionPercentage(userId, proid);
     const firstLesson = lessons.length > 0 ? lessons[0] : null;
 
     res.render('vwStudent/learn', {
@@ -230,6 +231,48 @@ router.get('/review/:proid/check', async (req, res) => {
       success: false, 
       message: error.message 
     });
+  }
+});
+
+//lesson progress
+router.post('/lessons/:lessonId/complete', async (req, res) => {
+  try {
+    const lessonId = +req.params.lessonId;
+    const userId = req.session.authUser.id;
+
+    const lesson = await lessonModel.findById(lessonId);
+    if (!lesson) {
+      return res.status(404).json({ success: false, message: 'Lesson not found' });
+    }
+
+    const isEnrolled = await enrollmentModel.isEnrolled(userId, lesson.proid);
+    if (!isEnrolled) {
+      return res.status(403).json({ success: false, message: 'Not enrolled' });
+    }
+
+    await lessonProgressModel.markComplete(userId, lessonId);
+    const progress = await lessonProgressModel.getCourseCompletionPercentage(userId, lesson.proid);
+
+    res.json({ success: true, message: 'Lesson marked as complete!', progress });
+  } catch (error) {
+    console.error('Complete lesson error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Mark lesson incomplete
+router.post('/lessons/:lessonId/incomplete', async (req, res) => {
+  try {
+    const lessonId = +req.params.lessonId;
+    const userId = req.session.authUser.id;
+
+    const lesson = await lessonModel.findById(lessonId);
+    await lessonProgressModel.markIncomplete(userId, lessonId);
+    const progress = await lessonProgressModel.getCourseCompletionPercentage(userId, lesson.proid);
+
+    res.json({ success: true, message: 'Lesson marked as incomplete', progress });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

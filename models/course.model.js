@@ -83,7 +83,8 @@ export default {
                 'cat.id as catid',
                 'parent_cat.name as parent_category_name',
                 'instructor.name as instructor_name',
-                'instructor.email as instructor_email'
+                'instructor.email as instructor_email',
+                'instructor.bio as instructor_bio'
             )
             .first();
     },
@@ -390,5 +391,22 @@ export default {
             totalReviews: parseInt(totalReviews),
             averageRating: avgRating ? parseFloat(parseFloat(avgRating).toFixed(1)) : 0
         };
+    },
+
+/**
+ * Update course completion status (instructor)
+ */
+
+    async updateCompletionStatus(proid, is_completed) {
+        const [updated] = await db('courses')
+        .where({ proid })
+        .update({
+        is_completed,
+        last_updated: db.fn.now()
+        })
+        .returning('*');
+
+    return updated;
     }
+
 };
