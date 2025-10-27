@@ -29,7 +29,7 @@
     {{/if}}
 
     <!-- Course Form -->
-    <form method="POST" action="{{#if isEdit}}/instructor/courses/{{course.proid}}/edit{{else}}/instructor/courses/create{{/if}}" id="courseForm" class="bg-white rounded-xl shadow-md overflow-hidden">
+    <form method="POST" action="{{#if isEdit}}/instructor/courses/{{course.proid}}/edit{{else}}/instructor/courses/create{{/if}}" id="courseForm" class="bg-white rounded-xl shadow-md overflow-hidden enctype="multipart/form-data">
         <!-- Basic Info -->
         <div class="p-6 border-b border-gray-200">
             <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">

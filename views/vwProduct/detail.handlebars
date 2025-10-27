@@ -317,7 +317,7 @@
                         {{!-- Check if current user is the instructor of this course --}}
                         {{#if isAuthenticated}}
                             {{#if (eq authUser.permission_level 2)}}
-                                {{#if (eq authUser.userid course.instructor_id)}}
+                                {{#if (eq authUser.id course.instructor_id)}}
                                 <!-- INSTRUCTOR VIEW - Course Owner -->
                                 <div class="text-center mb-6 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
                                     <svg class="mx-auto h-12 w-12 text-purple-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

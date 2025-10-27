@@ -270,7 +270,8 @@ export default {
             fulldes,
             catid,
             price,
-            promo_price
+            promo_price,
+            thumbnail
         } = courseData;
 
         const [course] = await db('courses')
@@ -282,6 +283,7 @@ export default {
                 catid,
                 price: parseFloat(price),
                 promo_price: promo_price ? parseFloat(promo_price) : null,
+                thumbnail: thumbnail || null,
                 views: 0,
                 is_disabled: false,
                 last_updated: db.fn.now()
@@ -315,6 +317,10 @@ export default {
 
         if (courseData.promo_price) {
             updateData.promo_price = parseFloat(courseData.promo_price);
+        }
+
+        if (courseData.thumbnail !== undefined) {
+            updateData.thumbnail = courseData.thumbnail;
         }
 
         const [updated] = await db('courses')

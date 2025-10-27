@@ -4,6 +4,9 @@ import userModel from '../models/user.model.js';
 import authMdw from '../middlewares/auth.mdw.js';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { sendMail } from '../ultis/emailService.js';
 
 const router = express.Router();
@@ -54,11 +57,9 @@ router.post('/signin', async (req, res) => {
         });
       };
     
-      console.log('Session saved successfully for user:', username);
       const redirectUrl = req.session.retUrl || '/';
       delete req.session.retUrl;
 
-      console.log('Redirecting to:', redirectUrl);
       res.redirect(redirectUrl);
     });
   } catch (error) {
@@ -116,49 +117,39 @@ router.post('/signup', async (req, res) => {
 });
 
 
-router.get('/verify-otp', (req, res) => {
-  res.render('vwAccount/verify-otp', { emailMessage: 'We sent a code to your email.' });
-});
-
-router.post('/verify-otp', async (req, res) => {
-  const { otp } = req.body;
-  const userId = req.session.tempUserId;
-  const user = await userModel.findById(userId);
-
-  if (!user) return res.redirect('/account/signup');
-
-  if (user.otp_code === otp && new Date() < user.otp_expires_at) {
-    await userModel.verifyUser(userId);
-    delete req.session.tempUserId;
-    return res.render('vwAccount/signin', { success_message: 'Email verified! You can now sign in.' });
+router.get("/verify-otp", (req, res) => {
+  if (!req.session.tempUserId) {
+    return res.redirect("/account/signup");
   }
-
-  res.render('vwAccount/verify-otp', { error_message: 'Invalid or expired OTP. Please try again.' });
+  res.render("vwAccount/verify-otp");
 });
 
-router.post('/resend-otp', async (req, res) => {
-  const userId = req.session.tempUserId;
-  if (!userId) return res.redirect('/account/signup');
+router.post("/verify-otp", async (req, res) => {
+  const { otp } = req.body;
+  try {
+    const tempUserId = req.session.tempUserId;
+    if (!tempUserId) {
+      return res.redirect("/account/signup");
+    }
+    const user = await userModel.findById(tempUserId);
+    if (!user) {
+      return res.render("vwAccount/verify-otp", { error_message: "User not found." });
+    }
+    if (user.otp_code !== otp) {
+      return res.render("vwAccount/verify-otp", { error_message: "Invalid OTP code." });
+    }
+    if (new Date() > new Date(user.otp_expires_at)) {
+      return res.render("vwAccount/verify-otp", { error_message: "OTP code has expired." });
+    }
 
-  const user = await userModel.findById(userId);
-  if (!user) return res.redirect('/account/signup');
+    await userModel.verifyUser(user.id);
 
-  const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  const newExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-  await userModel.update(userId, { otp_code: newOtp, otp_expires_at: newExpiry });
-
-  // Send email again
-  await transporter.sendMail({
-    from: `"Online Academy" <${process.env.MAIL_USER}>`,
-    to: user.email,
-    subject: 'Your new OTP code',
-    text: `Hi ${user.name || user.username}, your new OTP code is ${newOtp}. It expires in 10 minutes.`
-  });
-
-  res.render('vwAccount/verify-otp', {
-    success_message: 'A new OTP has been sent to your email.'
-  });
+    delete req.session.tempUserId; 
+    res.render("vwAccount/signin", { success_message: "Account verified! Please sign in." });
+  } catch (error) {
+    console.error(error);
+    res.render("vwAccount/verify-otp", { error_message: "An error occurred during verification." });
+  }
 });
 
 

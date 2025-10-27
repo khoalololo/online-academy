@@ -69,20 +69,23 @@
                         src="{{#if user.avatar}}{{user.avatar}}{{else}}/static/images/default-avatar.png{{/if}}" 
                         alt="Avatar" 
                         class="w-32 h-32 rounded-full object-cover border-4 border-indigo-200">
-                    <label for="avatarInput" 
-                        class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full cursor-pointer hover:bg-indigo-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                </div>
+                <div>
+                    <input type="file" 
+                        id="avatarInput" 
+                        accept="image/*" 
+                        class="hidden">
+                    <button onclick="document.getElementById('avatarInput').click()" 
+                            class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="uploadAvatar(this)">
-                    </label>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600">Upload a profile picture</p>
-                    <p class="text-xs text-gray-500 mt-1">JPG, PNG or GIF (max 5MB)</p>
+                        Choose Photo
+                    </button>
+                    <p class="text-xs text-gray-500 mt-2">JPG, PNG or GIF (max 5MB)</p>
                     {{#if user.avatar}}
-                    <button onclick="deleteAvatar()" class="mt-2 text-xs text-red-600 hover:text-red-800">
+                    <button onclick="deleteAvatar()" class="mt-2 text-xs text-red-600 hover:text-red-800 font-medium">
                         Remove picture
                     </button>
                     {{/if}}
@@ -414,13 +417,43 @@ document.querySelector('form[action="/account/change-password"]').addEventListen
         });
     }
 });
-// Avatar upload preview and handling
-async function uploadAvatar(input) {
-    if (!input.files || !input.files[0]) return;
+// Preview and upload avatar
+ocument.getElementById('avatarInput').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        Swal.fire({
+            title: 'Invalid File',
+            text: 'Please select an image file',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+            title: 'File Too Large',
+            text: 'Image must be less than 5MB',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
+
+    // Preview image
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        document.getElementById('avatarPreview').src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload image
     const formData = new FormData();
-    formData.append('avatar', input.files[0]);
-    formData.append('uploadType', 'avatars');
+    formData.append('avatar', file);
 
     try {
         const response = await fetch('/upload/avatar', {
@@ -430,27 +463,30 @@ async function uploadAvatar(input) {
 
         const data = await response.json();
 
-        if (response.ok) {
-            document.getElementById('avatarPreview').src = data.avatarPath;
+        if (response.ok && data.success) {
             Swal.fire({
                 title: 'Success!',
                 text: 'Profile picture updated!',
                 icon: 'success',
                 confirmButtonColor: '#4F46E5',
-                timer: 1500
+                timer: 2000,
+                showConfirmButton: false
             });
         } else {
-            throw new Error(data.message);
+            throw new Error(data.message || 'Upload failed');
         }
     } catch (error) {
+        console.error('Upload error:', error);
         Swal.fire({
-            title: 'Error!',
-            text: error.message || 'Failed to upload image',
+            title: 'Upload Failed',
+            text: error.message || 'Failed to upload image. Please try again.',
             icon: 'error',
             confirmButtonColor: '#4F46E5'
         });
+        // Revert preview on error
+        document.getElementById('avatarPreview').src = '{{#if user.avatar}}{{user.avatar}}{{else}}/static/images/default-avatar.png{{/if}}';
     }
-}
+});
 
 async function deleteAvatar() {
     const result = await Swal.fire({
@@ -459,7 +495,8 @@ async function deleteAvatar() {
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#EF4444',
-        confirmButtonText: 'Yes, remove it'
+        confirmButtonText: 'Yes, remove it',
+        cancelButtonColor: '#6B7280'
     });
 
     if (!result.isConfirmed) return;
@@ -469,17 +506,23 @@ async function deleteAvatar() {
             method: 'DELETE'
         });
 
-        if (response.ok) {
+        const data = await response.json();
+
+        if (response.ok && data.success) {
             document.getElementById('avatarPreview').src = '/static/images/default-avatar.png';
             Swal.fire({
                 title: 'Removed!',
                 text: 'Profile picture removed',
                 icon: 'success',
                 confirmButtonColor: '#4F46E5',
-                timer: 1500
+                timer: 1500,
+                showConfirmButton: false
             }).then(() => location.reload());
+        } else {
+            throw new Error(data.message || 'Delete failed');
         }
     } catch (error) {
+        console.error('Delete error:', error);
         Swal.fire({
             title: 'Error!',
             text: 'Failed to remove picture',
