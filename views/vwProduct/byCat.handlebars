@@ -14,13 +14,40 @@
         <section class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {{#each courses}}
-                <a href="/products/{{this.proid}}" class="group block bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
-                    <div class="h-40 flex items-center justify-center">
-                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" 
+                <div class="group bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
+                    <div class="relative h-40 flex items-center justify-center">
+                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}"
                              alt="{{this.proname}}" 
                              class="w-full h-full object-cover rounded-t-xl">
+                        <!-- Status Badge -->
+                        <div class="absolute top-3 right-3 flex flex-col gap-2 items-end">
+                            {{#if this.is_completed}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white shadow-lg">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    Complete
+                                </span>
+                            {{else}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-500 text-white shadow-lg">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Incomplete
+                                </span>
+                            {{/if}}
+
+                            {{#if this.is_disabled}}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white shadow-lg">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                    </svg>
+                                    Disabled
+                                </span>
+                            {{/if}}
+                        </div>
                     </div>
-                    <div class="p-5">
+                    <a href="/products/{{this.proid}}" class="block p-5">
                         <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold mb-2 px-2.5 py-0.5 rounded-full">
                             {{this.category_name}}
                         </span>
@@ -44,8 +71,8 @@
                                 <span class="text-2xl font-extrabold text-green-600">${{formatNumber this.price}}</span>
                             {{/if}}
                         </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
                 {{/each}}
             </div>
         </section>

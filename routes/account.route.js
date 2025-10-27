@@ -42,13 +42,7 @@ router.post('/signin', async (req, res) => {
     }
 
     req.session.isAuthenticated = true;
-    req.session.authUser = {
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      permission_level: user.permission_level
-    };
+    req.session.authUser = user; // Use the full user object
     req.session.save((err) => {
       if (err) {
         console.error('Session save error:', err)

@@ -121,7 +121,10 @@ app.engine('handlebars', engine({
         if (isNaN(num)) return '0.0';
         return num.toFixed(decimals || 1);
     },
-    formatDate: (date) => moment(date).format('MMM, DD, YYYY'),
+    formatDate (date, format) {
+      if (!date) return '';
+      return moment(date).format(format || 'YYYY-MM-DD');
+    },
     contains(str, substring) {
       if (!str || !substring) return false;
       return String(str).includes(String(substring));
@@ -146,7 +149,16 @@ app.engine('handlebars', engine({
       if (vimeoMatch) return vimeoMatch[1];
       
       return '';
-    }
+    },
+    replace: function (string, search, replacement) {
+      if (typeof string !== 'string') {
+        return '';
+      }
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      const searchRegExp = new RegExp(escapedSearch, 'g');
+      return string.replace(searchRegExp, replacement);
+    },
     // Add other helpers if needed
     
   }

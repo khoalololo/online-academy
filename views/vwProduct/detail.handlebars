@@ -90,7 +90,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
-                                    <div>
+                                    <div class="flex-1">
                                         <h4 class="font-semibold text-gray-900">{{this.title}}</h4>
                                         {{#if this.description}}
                                             <p class="text-sm text-gray-600 mt-1">{{this.description}}</p>
@@ -98,9 +98,27 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-3 ml-4">
                                 {{#if this.is_preview}}
-                                    <span class="text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded">Preview</span>
+                                    <button 
+                                    class="preview-btn px-4 py-2 bg-green-100 text-green-700 text-sm font-semibold rounded-lg hover:bg-green-200 transition-colors flex items-center"
+                                    data-id="{{this.id}}"
+                                    data-title="{{this.title}}"
+                                    data-description="{{this.description}}"
+                                    data-video="{{this.video_url}}">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    Preview
+                                    </button>
+                                {{else}}
+                                    <span class="text-xs bg-gray-100 text-gray-600 font-semibold px-3 py-2 rounded flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        Locked
+                                    </span>
                                 {{/if}}
                                 <span class="text-sm text-gray-500">{{div this.duration 60}} min</span>
                             </div>
@@ -260,11 +278,11 @@
                 <h2 class="text-2xl font-bold text-gray-900 mb-4">Instructor</h2>
                 <div class="flex items-start space-x-4">
                     <div class="flex-shrink-0">
-                        {{#if avatar}}
-                            <img src="{{avatar}}" alt="{{user_name}}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
+                        {{#if course.instructor_avatar}}
+                            <img src="{{course.instructor_avatar}}" alt="{{course.instructor_name}}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
                         {{else}}
-                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                {{substring user_name 0 1}}
+                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                                {{substring course.instructor_name 0 1}}
                             </div>
                         {{/if}}
                     </div>
@@ -534,6 +552,48 @@
             </div>
         </div>
     </div>
+    <!-- Preview Lesson Modal -->
+    <div id="previewModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <h2 id="previewLessonTitle" class="text-xl font-bold">Preview Lesson</h2>
+                </div>
+                <button onclick="closePreview()" class="text-white hover:text-gray-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body - Video Player -->
+            <div class="relative">
+                <div id="previewVideoContainer" class="w-full aspect-video bg-black">
+                    <!-- Plyr player will be initialized here -->
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 bg-gray-50 border-t">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p id="previewLessonDescription" class="text-sm text-gray-600"></p>
+                        <span class="inline-block mt-2 bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                            ✓ Free Preview
+                        </span>
+                    </div>
+                    <button onclick="closePreview()" 
+                            class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors">
+                        Close Preview
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{#section 'js'}}
@@ -755,5 +815,159 @@ if (stars.length > 0) {
     });
   }
 }
+
+let previewPlayer = null;
+
+function openPreview(lessonId, title, description, videoUrl) {
+    // Show modal
+    document.getElementById('previewModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+    // Update title and description
+    document.getElementById('previewLessonTitle').textContent = title || 'Preview Lesson';
+    document.getElementById('previewLessonDescription').textContent = description || '';
+
+    // Initialize video player
+    initializePreviewPlayer(videoUrl);
+}
+
+function closePreview() {
+    // Hide modal
+    document.getElementById('previewModal').classList.add('hidden');
+    document.body.style.overflow = 'auto'; // Restore scrolling
+
+    // Destroy player
+    if (previewPlayer) {
+        previewPlayer.destroy();
+        previewPlayer = null;
+    }
+
+    // Clear container
+    document.getElementById('previewVideoContainer').innerHTML = '';
+}
+
+function initializePreviewPlayer(videoUrl) {
+    // Destroy existing player
+    if (previewPlayer) {
+        previewPlayer.destroy();
+    }
+
+    if (!videoUrl) {
+        document.getElementById('previewVideoContainer').innerHTML = 
+            '<div class="flex items-center justify-center h-full text-white"><p>Video not available</p></div>';
+        return;
+    }
+
+    // Parse video URL
+    const { provider, videoId } = parseVideoUrl(videoUrl);
+    
+    if (!provider || !videoId) {
+        console.error('Invalid video URL:', videoUrl);
+        document.getElementById('previewVideoContainer').innerHTML = 
+            '<div class="flex items-center justify-center h-full text-white"><p>Invalid video URL</p></div>';
+        return;
+    }
+
+    // Create player container
+    const container = document.getElementById('previewVideoContainer');
+    container.innerHTML = `<div id="previewPlyrPlayer" data-plyr-provider="${provider}" data-plyr-embed-id="${videoId}"></div>`;
+
+    // Initialize Plyr (need to load Plyr library first)
+    if (typeof Plyr !== 'undefined') {
+        previewPlayer = new Plyr('#previewPlyrPlayer', {
+            controls: [
+                'play-large',
+                'play',
+                'progress',
+                'current-time',
+                'duration',
+                'mute',
+                'volume',
+                'settings',
+                'fullscreen'
+            ],
+            settings: ['quality', 'speed'],
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
+        });
+    } else {
+        // Fallback to iframe if Plyr not loaded
+        container.innerHTML = `
+            <iframe 
+                class="w-full h-full"
+                src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+            </iframe>`;
+    }
+}
+
+function parseVideoUrl(url) {
+    if (!url) return { provider: null, videoId: null };
+
+    // YouTube patterns
+    const youtubePatterns = [
+        /(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
+    ];
+
+    for (const pattern of youtubePatterns) {
+        const match = url.match(pattern);
+        if (match) {
+            return { provider: 'youtube', videoId: match[1] };
+        }
+    }
+
+    // Vimeo patterns
+    const vimeoPattern = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
+    const vimeoMatch = url.match(vimeoPattern);
+    if (vimeoMatch) {
+        return { provider: 'vimeo', videoId: vimeoMatch[1] };
+    }
+
+    return { provider: null, videoId: null };
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closePreview();
+    }
+});
+
+// Close modal when clicking outside
+document.getElementById('previewModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'previewModal') {
+        closePreview();
+    }
+});
+
+// Load Plyr for preview if not already loaded
+if (typeof Plyr === 'undefined') {
+  const plyrCSS = document.createElement('link');
+  plyrCSS.rel = 'stylesheet';
+  plyrCSS.href = 'https://cdn.plyr.io/3.7.8/plyr.css';
+  document.head.appendChild(plyrCSS);
+
+  const plyrJS = document.createElement('script');
+  plyrJS.src = 'https://cdn.plyr.io/3.7.8/plyr.js';
+  plyrJS.onload = () => console.log('Plyr loaded');
+  document.head.appendChild(plyrJS);
+}
+
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.preview-btn');
+  if (!btn) return;
+
+  const id = btn.dataset.id;
+  const title = btn.dataset.title;
+  const description = btn.dataset.description;
+  const videoUrl = btn.dataset.video;
+
+  openPreview(id, title, description, videoUrl);
+});
+
 </script>
 {{/section}}

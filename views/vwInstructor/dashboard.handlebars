@@ -110,7 +110,27 @@
             {{#each courses}}
             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div class="flex-1">
-                    <h3 class="font-semibold text-gray-900">{{this.proname}}</h3>
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-semibold text-gray-900">{{this.proname}}</h3>
+                        
+                        <!-- Completion Status Badge -->
+                        {{#if this.is_completed}}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800">
+                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                Complete
+                            </span>
+                        {{else}}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Incomplete
+                            </span>
+                        {{/if}}
+                    </div>
+                    
                     <p class="text-sm text-gray-600 mt-1">{{this.category_name}}</p>
                     <div class="flex items-center mt-2 space-x-4 text-xs text-gray-500">
                         <span>{{formatNumber this.enrollment_count}} students</span>
@@ -125,11 +145,11 @@
                 </div>
                 <div class="flex items-center space-x-2">
                     <a href="/instructor/courses/{{this.proid}}/edit" 
-                       class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                         Edit
                     </a>
                     <a href="/products/{{this.proid}}" 
-                       class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
                         View
                     </a>
                 </div>

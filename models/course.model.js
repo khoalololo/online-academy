@@ -33,7 +33,8 @@ const _getBaseQuery = () => {
     .leftJoin(_getRatingSubquery(), 'c.proid', 'ratings.proid')
     .leftJoin(_getEnrollmentSubquery(), 'c.proid', 'enrollments.proid')
     .select(
-      'c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price', 'c.last_updated',
+      'c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 
+      'c.last_updated', 'c.thumbnail', 'c.is_disabled', 'c.is_completed', 
       'cat.name as category_name',
       'u.name as instructor_name',
       db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
@@ -95,7 +96,7 @@ export default {
         
         const courses = await _getBaseQuery()
             .select('c.proid', 'c.proname', 'c.thumbnail',  'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
-                'cat.name as category_name', 'u.name as instructor_name',
+                'cat.name as category_name', 'u.name as instructor_name', 'c.is_completed',
                 'ratings.average_rating', 'ratings.rating_count')
             .orderBy('c.last_updated', 'desc')
             .limit(limit)
@@ -124,7 +125,7 @@ export default {
         const courses = await _getBaseQuery()
             .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
             .select('c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
-                'cat.name as category_name', 'u.name as instructor_name',
+                'cat.name as category_name', 'u.name as instructor_name', 'c.is_completed',
                 'ratings.average_rating', 'ratings.rating_count')
             .orderBy('c.last_updated', 'desc')
             .limit(limit)
@@ -231,11 +232,13 @@ export default {
         
         const courses = await _getBaseQuery()
             .where('c.instructor_id', instructorId)
-            .select('c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price',
-                    'c.last_updated',
-                    'cat.name as category_name',
-                    'ratings.average_rating', 'ratings.rating_count',
-                    'enrollments.enrollment_count')
+            .select(
+                'c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 
+                'c.last_updated', 'c.thumbnail', 'c.is_completed', 
+                'cat.name as category_name',
+                'ratings.average_rating', 'ratings.rating_count',
+                'enrollments.enrollment_count'
+            )
             .orderBy('c.last_updated', 'desc')
             .limit(limit)
             .offset(offset);
