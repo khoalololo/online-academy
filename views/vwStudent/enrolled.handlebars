@@ -6,7 +6,9 @@
             {{#each courses}}
                 <div class="bg-white rounded-xl shadow-md overflow-hidden">
                     <a href="/student/learn/{{this.proid}}" class="block">
-                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" alt="{{this.proname}}" class="w-full h-48 object-cover">
+                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" 
+                             alt="{{this.proname}}" 
+                             class="w-full h-48 object-cover">
                     </a>
                     <div class="p-6">
                         <div class="flex items-baseline">

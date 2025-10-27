@@ -121,7 +121,32 @@ app.engine('handlebars', engine({
         if (isNaN(num)) return '0.0';
         return num.toFixed(decimals || 1);
     },
-    formatDate: (date) => moment(date).format('MMM DD, YYYY')    
+    formatDate: (date) => moment(date).format('MMM, DD, YYYY'),
+    contains(str, substring) {
+      if (!str || !substring) return false;
+      return String(str).includes(String(substring));
+    },
+    extractVideoId(url) {
+      if (!url) return '';
+      
+      // YouTube patterns
+      const youtubePatterns = [
+        /(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
+      ];
+      
+      for (const pattern of youtubePatterns) {
+        const match = url.match(pattern);
+        if (match) return match[1];
+      }
+      
+      // Vimeo patterns
+      const vimeoPattern = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
+      const vimeoMatch = url.match(vimeoPattern);
+      if (vimeoMatch) return vimeoMatch[1];
+      
+      return '';
+    }
     // Add other helpers if needed
     
   }

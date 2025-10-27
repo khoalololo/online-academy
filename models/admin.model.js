@@ -69,7 +69,7 @@ export default {
    */
   async getRecentUsers(limit = 5) {
     const users = await db('users')
-      .select('id', 'name', 'email', 'username', 'permission_level', 'is_verified', 'created_at')
+      .select('id', 'name', 'email', 'username', 'permission_level', 'is_verified', 'created_at', 'avatar')
       .orderBy('created_at', 'desc')
       .limit(limit);
 
@@ -117,7 +117,7 @@ export default {
     const offset = (page - 1) * limit;
 
     let query = db('users')
-      .select('id', 'username', 'name', 'email', 'permission_level', 'is_verified', 'created_at')
+      .select('id', 'username', 'name', 'email', 'permission_level', 'is_verified', 'created_at', 'avatar')
       .orderBy('created_at', 'desc');
 
     if (roleFilter) {
@@ -147,7 +147,7 @@ export default {
   async getUserDetails(userId) {
     const user = await db('users')
       .where('id', userId)
-      .select('id', 'username', 'name', 'email', 'dob', 'permission_level', 'is_verified', 'created_at')
+      .select('id', 'username', 'name', 'email', 'dob', 'permission_level', 'is_verified', 'created_at', 'avatar')
       .first();
 
     if (!user) return null;

@@ -18,12 +18,12 @@
         <!-- Courses Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {{#each courses}}
-            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 {{#if this.is_disabled}}opacity-60{{/if}}">
                 <!-- Course Image -->
                 <div class="relative h-48 bg-gradient-to-br from-indigo-500 to-purple-600">
                     <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" 
                          alt="{{this.proname}}" 
-                         class="w-full h-full object-cover opacity-80">
+                         class="w-full h-full object-cover">
                     
                     <!-- Status Badge -->
                     <div class="absolute top-3 right-3">

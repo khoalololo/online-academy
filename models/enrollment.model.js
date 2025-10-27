@@ -23,7 +23,7 @@ export default {
       .join('categories as cat', 'c.catid', 'cat.id')
       .join('users as instructor', 'c.instructor_id', 'instructor.id')
       .where('e.user_id', userId)
-      .select('e.*', 'c.proname', 'c.tinydes', 'c.price', 'cat.name as category_name', 'instructor.name as instructor_name')
+      .select('e.*', 'c.proname', 'c.tinydes', 'c.price', 'c.thumbnail',  'cat.name as category_name', 'instructor.name as instructor_name')
       .orderBy('e.enroll_date', 'desc');
   }
 };

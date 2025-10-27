@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import authMdw from '../middlewares/auth.mdw.js';
-import courseModel from '../models/course.model.js';
+import db from '../ultis/db.js';
 
 const router = express.Router();
 
@@ -19,8 +19,16 @@ const uploadDir = 'static/uploads';
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadType = req.body.uploadType || 'avatars';
-    cb(null, path.join(uploadDir, uploadType));
+    // Determine folder based on the route path instead of req.body
+    let folder = 'avatars'; // default
+    
+    if (req.path.includes('/course-thumbnail')) {
+      folder = 'courses';
+    } else if (req.path.includes('/avatar')) {
+      folder = 'avatars';
+    }
+    
+    cb(null, path.join(uploadDir, folder));
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -57,9 +65,17 @@ router.post('/avatar', authMdw.isAuthenticated, upload.single('avatar'), async (
 
     const avatarPath = `/static/uploads/avatars/${req.file.filename}`;
     const userId = req.session.authUser.id;
+    const user = await db('users').where('id', userId).first();
+    
+    // Delete old avatar file if exists
+    if (user.avatar && user.avatar !== avatarPath) {
+      const oldPath = path.join(process.cwd(), user.avatar);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
 
     // Update user avatar in database
-    const db = (await import('../ultis/db.js')).default;
     await db('users')
       .where('id', userId)
       .update({ avatar: avatarPath });
@@ -81,9 +97,7 @@ router.post('/avatar', authMdw.isAuthenticated, upload.single('avatar'), async (
 // ==================== USER AVATAR DELETE ====================
 router.delete('/avatar', authMdw.isAuthenticated, async (req, res) => {
   try {
-    const userId = req.session.authUser.id;
-    const db = (await import('../ultis/db.js')).default;
-    
+    const userId = req.session.authUser.id;    
     const user = await db('users').where('id', userId).first();
     
     // Delete old avatar file
@@ -105,32 +119,35 @@ router.delete('/avatar', authMdw.isAuthenticated, async (req, res) => {
 // ==================== COURSE THUMBNAIL UPLOAD ====================
 router.post('/course-thumbnail', authMdw.isInstructor, upload.single('thumbnail'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
     const thumbnailPath = `/static/uploads/courses/${req.file.filename}`;
     const courseId = req.body.courseId;
-    if (!courseId) return res.status(400).json({ success: false, message: 'Course ID is required' });
 
-    const course = await courseModel.findById(courseId);
-    if (!course || course.instructor_id !== req.session.authUser.id) {
+    if (!courseId) {
+      return res.status(400).json({ success: false, message: 'Course ID is required' });
+    }
+
+    // Update course thumbnail in database
+    const course = await db('courses')
+      .where('proid', courseId)
+      .where('instructor_id', req.session.authUser.id)
+      .first();
+
+    if (!course) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    // Update course using the model
-    const updatedCourse = await courseModel.updateByInstructor(courseId, req.session.authUser.id, {
-      thumbnail: thumbnailPath,
-      proname: course.proname,      
-      tinydes: course.tinydes,
-      fulldes: course.fulldes,
-      catid: course.catid,
-      price: course.price,
-      promo_price: course.promo_price
-    });
+    await db('courses')
+      .where('proid', courseId)
+      .update({ thumbnail: thumbnailPath });
 
     res.json({
       success: true,
       message: 'Thumbnail uploaded successfully',
-      thumbnailPath,
-      course: updatedCourse
+      thumbnailPath: thumbnailPath
     });
   } catch (error) {
     console.error('Thumbnail upload error:', error);
@@ -138,41 +155,34 @@ router.post('/course-thumbnail', authMdw.isInstructor, upload.single('thumbnail'
   }
 });
 
-
 // ==================== COURSE THUMBNAIL DELETE ====================
 router.delete('/course-thumbnail/:proid', authMdw.isInstructor, async (req, res) => {
   try {
-    const proid = req.params.proid;
-    const course = await courseModel.findById(proid);
+    const proid = req.params.proid;    
+    const course = await db('courses')
+      .where('proid', proid)
+      .where('instructor_id', req.session.authUser.id)
+      .first();
 
-    if (!course || course.instructor_id !== req.session.authUser.id) {
+    if (!course) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
-    // Delete file from filesystem
+    // Delete file
     if (course.thumbnail) {
       const fullPath = path.join(process.cwd(), course.thumbnail);
-      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
     }
 
-    // Update course model
-    await courseModel.updateByInstructor(proid, req.session.authUser.id, {
-      proname: course.proname,
-      tinydes: course.tinydes,
-      fulldes: course.fulldes,
-      catid: course.catid,
-      price: course.price,
-      promo_price: course.promo_price,
-      thumbnail: null
-    });
+    await db('courses').where('proid', proid).update({ thumbnail: null });
 
     res.json({ success: true, message: 'Thumbnail removed' });
   } catch (error) {
-    console.error('Thumbnail delete error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
-
 
 // ==================== DELETE IMAGE ====================
 router.delete('/image', authMdw.isAuthenticated, async (req, res) => {

@@ -32,11 +32,11 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
         <div class="p-6 bg-gradient-to-r from-indigo-600 to-purple-600">
             <div class="flex items-center space-x-4">
-                {{#if this.avatar}}
-                    <img src="{{this.avatar}}" alt="{{this.name}}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
+                {{#if user.avatar}}
+                    <img src="{{user.avatar}}" alt="{{user.name}}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
                 {{else}}
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                        {{substring this.name 0 1}}
+                        {{substring user.name 0 1}}
                     </div>
                 {{/if}}
                 <div class="text-white">
@@ -144,7 +144,7 @@
                         id="dob" 
                         name="dob" 
                         type="date" 
-                        value="{{user.dob}}" 
+                        value="{{formatDate user.dob 'YYYY-MM-DD'}}" 
                         required 
                         class="block w-full px-4 py-2 rounded-lg border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 </div>
@@ -418,7 +418,7 @@ document.querySelector('form[action="/account/change-password"]').addEventListen
     }
 });
 // Preview and upload avatar
-ocument.getElementById('avatarInput').addEventListener('change', async function(e) {
+document.getElementById('avatarInput').addEventListener('change', async function(e) {
     const file = e.target.files[0];
     if (!file) return;
 

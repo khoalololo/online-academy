@@ -84,7 +84,8 @@ export default {
                 'parent_cat.name as parent_category_name',
                 'instructor.name as instructor_name',
                 'instructor.email as instructor_email',
-                'instructor.bio as instructor_bio'
+                'instructor.bio as instructor_bio',
+                'instructor.avatar as instructor_avatar'
             )
             .first();
     },
@@ -130,7 +131,6 @@ export default {
             .offset(offset);
         const [{ count }] = await db('courses').whereIn('catid', Array.isArray(catid) ? catid : [catid]).count('proid as count');
 
-        // Ensure average_rating is a number, not a string from the DB.
         courses.forEach(course => {
             if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
         });

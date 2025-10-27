@@ -30,6 +30,7 @@ export default {
         'c.tinydes',
         'c.price',
         'c.promo_price',
+        'c.thumbnail',
         'cat.name as category_name',
         'u.name as instructor_name',
         'ratings.average_rating',

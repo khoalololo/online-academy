@@ -58,7 +58,8 @@ export default {
         'r.created_at',
         'r.updated_at',
         'u.name as user_name',
-        'u.id as user_id'
+        'u.id as user_id',
+        'u.avatar as avatar'
       )
       .orderBy('r.created_at', 'desc')
       .limit(limit)
