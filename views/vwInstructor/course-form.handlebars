@@ -74,53 +74,75 @@
         </div>
 
         <!-- Course Thumbnail -->
+        {{#if isEdit}}
         <div class="p-6 border-b border-gray-200">
-        <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            Course Thumbnail
-        </h2>
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                Course Thumbnail
+            </h2>
 
-        <div class="flex items-start space-x-6">
-            <!-- Thumbnail Preview -->
-            <div class="flex-shrink-0">
-                <img id="thumbnailPreview" 
-                    src="{{#if course.thumbnail}}{{course.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" 
-                    alt="Course thumbnail" 
-                    class="w-64 h-36 object-cover rounded-lg border-2 border-gray-300">
+            <div class="p-4 bg-blue-50 border-l-4 border-blue-400 mb-4">
+                <p class="text-sm text-blue-700">
+                    💡 <strong>Tip:</strong> Upload a professional thumbnail to make your course more attractive to students!
+                </p>
             </div>
 
-            <!-- Upload Controls -->
-            <div class="flex-1">
-                <label for="thumbnailInput" class="block text-sm font-medium text-gray-700 mb-2">
-                    Upload Course Thumbnail
-                </label>
-                <input type="file" 
-                    id="thumbnailInput" 
-                    accept="image/*" 
-                    onchange="previewThumbnail(this)"
-                    class="block w-full text-sm text-gray-500 
-                            file:mr-4 file:py-2 file:px-4 
-                            file:rounded-lg file:border-0 
-                            file:text-sm file:font-semibold 
-                            file:bg-indigo-50 file:text-indigo-700 
-                            hover:file:bg-indigo-100 cursor-pointer">
-                <p class="text-xs text-gray-500 mt-2">
-                    Recommended size: 800x450px (16:9 ratio) • Max 5MB • JPG, PNG, or WEBP
-                </p>
-                
-                {{#if isEdit}}
+            <div class="flex items-start space-x-6">
+                <!-- Thumbnail Preview -->
+                <div class="flex-shrink-0">
+                    <img id="thumbnailPreview" 
+                        src="{{#if course.thumbnail}}{{course.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" 
+                        alt="Course thumbnail" 
+                        class="w-64 h-36 object-cover rounded-lg border-2 border-gray-300">
+                </div>
+
+                <!-- Upload Controls -->
+                <div class="flex-1">
+                    <label for="thumbnailInput" class="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Course Thumbnail
+                    </label>
+                    <input type="file" 
+                            id="thumbnailInput" 
+                            accept="image/*" 
+                            onchange="uploadThumbnailNow(this)"
+                            class="block w-full text-sm text-gray-500 
+                                    file:mr-4 file:py-2 file:px-4 
+                                    file:rounded-lg file:border-0 
+                                    file:text-sm file:font-semibold 
+                                    file:bg-indigo-50 file:text-indigo-700 
+                                    hover:file:bg-indigo-100 cursor-pointer">
+                    <p class="text-xs text-gray-500 mt-2">
+                        Recommended size: 800x450px (16:9 ratio) • Max 5MB • JPG, PNG, or WEBP
+                    </p>
+                    
                     {{#if course.thumbnail}}
                     <button type="button" onclick="deleteThumbnail()" 
                             class="mt-3 text-sm text-red-600 hover:text-red-800 font-medium">
                         Remove Thumbnail
                     </button>
                     {{/if}}
-                {{/if}}
+                </div>
             </div>
         </div>
-    </div>
+        {{else}}
+        <!-- For CREATE: Show info message -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-yellow-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <div class="ml-3">
+                        <p class="text-sm text-yellow-700">
+                            <strong>Note:</strong> You can upload a course thumbnail after creating the course. Complete the basic information first, then edit the course to add a thumbnail.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{/if}}
 
         <!-- Description -->
         <div class="p-6 border-b border-gray-200">
@@ -253,84 +275,71 @@ document.getElementById('courseForm').addEventListener('submit', e => {
     }
 });
 
-// Thumbnail preview
-function previewThumbnail(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('thumbnailPreview').src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-}
+{{#if isEdit}}
+// Thumbnail upload (immediate upload on file select)
+async function uploadThumbnailNow(input) {
+    if (!input.files || !input.files[0]) return;
 
-// Upload thumbnail when form is submitted
-document.getElementById('courseForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    tinymce.triggerSave();
-
-    // Validate prices
-    const price = parseFloat(priceInput.value) || 0;
-    const promo = parseFloat(promoInput.value) || 0;
-    if (promo >= price && promo !== 0) {
-        alert('Promotional price must be less than the regular price.');
+    const file = input.files[0];
+    
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        Swal.fire({
+            title: 'File Too Large',
+            text: 'Please select an image smaller than 5MB',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+        input.value = '';
         return;
     }
 
-    // First submit the form data
-    const formData = new FormData(this);
-    
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('thumbnailPreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to server
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    formData.append('courseId', '{{course.proid}}');
+    formData.append('uploadType', 'courses');
+
     try {
-        const response = await fetch(this.action, {
+        const response = await fetch('/upload/course-thumbnail', {
             method: 'POST',
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to save course');
+        const data = await response.json();
+
+        if (response.ok) {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Thumbnail uploaded successfully!',
+                icon: 'success',
+                confirmButtonColor: '#4F46E5',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else {
+            throw new Error(data.message || 'Upload failed');
         }
-
-        // If there's a thumbnail to upload
-        const thumbnailInput = document.getElementById('thumbnailInput');
-        if (thumbnailInput.files.length > 0) {
-            const courseId = {{#if course}}{{course.proid}}{{else}}'new'{{/if}};
-            await uploadThumbnail(thumbnailInput.files[0], courseId);
-        }
-
-        Swal.fire({
-            title: 'Success!',
-            text: '{{#if isEdit}}Course updated{{else}}Course created{{/if}} successfully!',
-            icon: 'success',
-            confirmButtonColor: '#4F46E5'
-        }).then(() => {
-            window.location.href = '/instructor/courses';
-        });
-
     } catch (error) {
+        console.error('Thumbnail upload error:', error);
         Swal.fire({
-            title: 'Error!',
-            text: error.message || 'Failed to save course',
+            title: 'Upload Failed',
+            text: error.message || 'Failed to upload thumbnail',
             icon: 'error',
             confirmButtonColor: '#4F46E5'
         });
+        // Reset to original image
+        document.getElementById('thumbnailPreview').src = 
+            '{{#if course.thumbnail}}{{course.thumbnail}}{{else}}/static/images/default-course.png{{/if}}';
+        input.value = '';
     }
-});
-
-async function uploadThumbnail(file, courseId) {
-    const formData = new FormData();
-    formData.append('thumbnail', file);
-    formData.append('courseId', courseId);
-    formData.append('uploadType', 'courses');
-
-    const response = await fetch('/upload/course-thumbnail', {
-        method: 'POST',
-        body: formData
-    });
-
-    if (!response.ok) {
-        throw new Error('Failed to upload thumbnail');
-    }
-    return response.json();
 }
 
 async function deleteThumbnail() {
@@ -350,25 +359,52 @@ async function deleteThumbnail() {
             method: 'DELETE'
         });
 
+        const data = await response.json();
+
         if (response.ok) {
             document.getElementById('thumbnailPreview').src = '/static/images/default-course.png';
             document.getElementById('thumbnailInput').value = '';
             Swal.fire({
                 title: 'Removed!',
-                text: 'Thumbnail removed',
+                text: 'Thumbnail removed successfully',
                 icon: 'success',
                 confirmButtonColor: '#4F46E5',
                 timer: 1500
             });
+        } else {
+            throw new Error(data.message);
         }
     } catch (error) {
         Swal.fire({
             title: 'Error!',
-            text: 'Failed to remove thumbnail',
+            text: error.message || 'Failed to remove thumbnail',
             icon: 'error',
             confirmButtonColor: '#4F46E5'
         });
     }
 }
+{{/if}}
+
+// Standard form submission (no thumbnail handling)
+document.getElementById('courseForm').addEventListener('submit', function(e) {
+    tinymce.triggerSave();
+    
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    const promo = parseFloat(document.getElementById('promo_price').value) || 0;
+    
+    if (promo >= price && promo !== 0) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Invalid Price',
+            text: 'Promotional price must be less than the regular price.',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+        return false;
+    }
+    
+    // Let the form submit normally
+    return true;
+});
 </script>
 {{/section}}
