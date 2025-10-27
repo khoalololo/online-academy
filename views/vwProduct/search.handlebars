@@ -61,7 +61,7 @@
         {{/if}}
 
         <a href="/products/{{this.proid}}" class="block">
-            <img class="w-full h-48 object-cover" src="https://picsum.photos/600/400?random={{this.proid}}" alt="{{this.proname}}">
+            <img class="w-full h-48 object-cover" src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" alt="{{this.proname}}">
         </a>
         <div class="p-4 flex flex-col flex-grow">
             <p class="text-sm text-indigo-600 font-semibold mb-1">{{this.category_name}}</p>

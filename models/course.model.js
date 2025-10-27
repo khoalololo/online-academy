@@ -33,7 +33,7 @@ const _getBaseQuery = () => {
     .leftJoin(_getRatingSubquery(), 'c.proid', 'ratings.proid')
     .leftJoin(_getEnrollmentSubquery(), 'c.proid', 'enrollments.proid')
     .select(
-      'c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.last_updated',
+      'c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price', 'c.last_updated',
       'cat.name as category_name',
       'u.name as instructor_name',
       db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
@@ -93,7 +93,7 @@ export default {
         const offset = (page - 1) * limit;
         
         const courses = await _getBaseQuery()
-            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+            .select('c.proid', 'c.proname', 'c.thumbnail',  'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name',
                 'ratings.average_rating', 'ratings.rating_count')
             .orderBy('c.last_updated', 'desc')
@@ -122,7 +122,7 @@ export default {
         
         const courses = await _getBaseQuery()
             .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
-            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
+            .select('c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name',
                 'ratings.average_rating', 'ratings.rating_count')
             .orderBy('c.last_updated', 'desc')
@@ -231,7 +231,7 @@ export default {
         
         const courses = await _getBaseQuery()
             .where('c.instructor_id', instructorId)
-            .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 
+            .select('c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price',
                     'c.last_updated',
                     'cat.name as category_name',
                     'ratings.average_rating', 'ratings.rating_count',

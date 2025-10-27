@@ -126,9 +126,13 @@
                 <div class="p-4 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                {{substring this.name 0 1}}
-                            </div>
+                            {{#if this.avatar}}
+                                    <img src="{{this.avatar}}" alt="{{this.name}}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">
+                            {{else}}
+                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                    {{substring this.name 0 1}}
+                                </div>
+                            {{/if}}
                             <div>
                                 <p class="font-semibold text-gray-900">{{this.name}}</p>
                                 <p class="text-xs text-gray-500">{{this.email}}</p>

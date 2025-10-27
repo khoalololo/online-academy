@@ -99,7 +99,7 @@
                 {{#each topViewed}}
                 <a href="/products/{{this.proid}}" class="group flex-shrink-0 w-72 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
                     <div class="h-36 flex items-center justify-center">
-                        <img src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-full object-cover">
+                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" alt="{{this.proname}}" class="w-full h-full object-cover">
                     </div>
                     <div class="p-4">
                         <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold mb-2 px-2.5 py-0.5 rounded-full">{{this.category_name}}</span>
@@ -134,7 +134,7 @@
                 {{#each newest}}
                 <a href="/products/{{this.proid}}" class="group flex-shrink-0 w-72 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200">
                     <div class="h-36 bg-gray-100 flex items-center justify-center">
-                        <img src="https://picsum.photos/400/200?random={{this.proid}}" alt="{{this.proname}}" class="w-full h-full object-cover">
+                        <img src="{{#if this.thumbnail}}{{this.thumbnail}}{{else}}/static/images/default-course.png{{/if}}" alt="{{this.proname}}" class="w-full h-full object-cover">
                     </div>
                     <div class="p-4">
                         <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold mb-2 px-2.5 py-0.5 rounded-full">{{this.category_name}}</span>

@@ -78,6 +78,7 @@ export default {
     if (data.email) updateData.email = data.email;
     if (data.dob) updateData.dob = data.dob;
     if (data.bio !== undefined) updateData.bio = data.bio;
+    if (data.avatar !== undefined) updateData.avatar = data.avatar;
 
     const [updated] = await db('users').where('id', userId).update(updateData).returning('*');
     return updated;
@@ -102,6 +103,7 @@ export default {
     if (data.email !== undefined) updateData.email = data.email;
     if (data.dob !== undefined) updateData.dob = data.dob;
     if (data.bio !== undefined) updateData.bio = data.bio;
+    if (data.avatar !== undefined) updateData.avatar = data.avatar;
 
     const [updated] = await db('users')
       .where('id', userId)
@@ -120,15 +122,12 @@ export default {
 
   async getInstructorPublicInfo(userId) {
     const user = await db('users')
-      .select('id', 'name', 'email', 'bio')
+      .select('id', 'name', 'email', 'bio', 'avatar')
       .where('id', userId)
       .first();
 
     if (!user) return null;
-
-    // Instead of repeating all stats here,
-    // call the existing function in course.model.js
-    const courseModel = require('./course.model');
+    const courseModel = require('./course.model.js');
     const stats = await courseModel.getInstructorStats(userId);
 
     return { ...user, stats };

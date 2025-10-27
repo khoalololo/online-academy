@@ -1,10 +1,48 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import authMdw from '../middlewares/auth.mdw.js';
 import courseModel from '../models/course.model.js';
 import categoryModel from '../models/category.model.js';
 import lessonModel from '../models/lesson.model.js';
 
 const router = express.Router();
+
+// --- Multer setup for thumbnails ---
+const uploadDir = 'static/uploads/courses';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'thumbnail-' + uniqueSuffix + ext);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif|webp/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+  
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed'));
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: fileFilter
+});
 
 // Apply instructor authentication to all routes
 router.use(authMdw.isInstructor);
@@ -90,7 +128,7 @@ router.get('/courses/create', async (req, res) => {
 });
 
 // [POST] /instructor/courses/create - Handle course creation
-router.post('/courses/create', async (req, res) => {
+router.post('/courses/create', upload.single('thumbnail'), async (req, res) => {
   try {
     const instructorId = req.session.authUser.id;
     const courseData = {
@@ -102,6 +140,10 @@ router.post('/courses/create', async (req, res) => {
       price: parseFloat(req.body.price),
       promo_price: req.body.promo_price ? parseFloat(req.body.promo_price) : null
     };
+
+    if (req.file) {
+      courseData.thumbnail = `/static/uploads/courses/${req.file.filename}`;
+    }
     
     const newCourse = await courseModel.createByInstructor(courseData);
     
@@ -159,7 +201,7 @@ router.get('/courses/:proid/edit', async (req, res) => {
 });
 
 // [POST] /instructor/courses/:proid/edit - Handle course update
-router.post('/courses/:proid/edit', async (req, res) => {
+router.post('/courses/:proid/edit', upload.single('thumbnail'), async (req, res) => {
   try {
     const proid = +req.params.proid;
     const instructorId = req.session.authUser.id;
@@ -172,10 +214,14 @@ router.post('/courses/:proid/edit', async (req, res) => {
       price: parseFloat(req.body.price),
       promo_price: req.body.promo_price ? parseFloat(req.body.promo_price) : null
     };
+
+    if (req.file) {
+      courseData.thumbnail = `/static/uploads/courses/${req.file.filename}`;
+    }
     
     await courseModel.updateByInstructor(proid, instructorId, courseData);
     
-    res.redirect(`/instructor/courses`);
+    res.redirect('/instructor/courses');
   } catch (error) {
     console.error('Course update error:', error);
     const categories = await categoryModel.getHierarchicalMenu();

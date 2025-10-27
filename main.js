@@ -13,7 +13,8 @@ import accountRouter from './routes/account.route.js';
 import productRouter from './routes/product.route.js'; 
 import studentRouter from './routes/student.route.js';
 import instructorRouter from './routes/instructor.route.js';
-import adminRouter from './routes/admin.route.js'; 
+import adminRouter from './routes/admin.route.js';
+import uploadRouter from './routes/upload.route.js';
 
 const __dirname = import.meta.dirname;
 const app = express();
@@ -154,6 +155,7 @@ app.use('/products', productRouter);
 app.use('/student', studentRouter);
 app.use('/instructor', instructorRouter);
 app.use('/admin', adminRouter);
+app.use('/upload', uploadRouter);
 
 // --- Homepage Route ---
 app.get('/', async function(req, res) {
