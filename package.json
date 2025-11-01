@@ -22,7 +22,6 @@
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "crypto": "^1.0.1",
     "express": "^5.1.0",
     "express-handlebars": "^8.0.1",
     "express-handlebars-sections": "^1.0.1",
