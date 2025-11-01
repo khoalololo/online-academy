@@ -21,8 +21,8 @@ const app = express();
 
 // --- Middleware Setup ---
 app.set('trust proxy', 1);
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '990mb' })); 
+app.use(express.json({ limit: '110mb' }));
 app.use('/static', express.static('static'));
 app.use(session({
   secret: 'your-secret-key', 
@@ -184,6 +184,23 @@ app.use(async function(req, res, next) {
     res.locals.global_categories = [];
   }
   next();
+});
+
+// --- API endpoint for search suggestions ---
+app.get('/api/search-suggestions', async function(req, res) {
+  try {
+    const query = req.query.q || '';
+    
+    if (query.trim().length < 2) {
+      return res.json([]);
+    }
+
+    const suggestions = await courseModel.searchSuggestions(query, 5);
+    res.json(suggestions);
+  } catch (error) {
+    console.error('Search suggestions error:', error);
+    res.status(500).json({ error: 'Failed to fetch suggestions' });
+  }
 });
 
 // --- Route Registration ---

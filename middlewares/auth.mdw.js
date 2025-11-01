@@ -22,7 +22,9 @@ export default {
     if (req.session.isAuthenticated && req.session.authUser && req.session.authUser.permission_level === PERMISSIONS.ADMIN) {
       return next();
     }
-    res.status(403).send('Access Denied'); 
+    res.status(403).render('403', { 
+      layout: false, error: { status: 403, message: 'Access Denied' } 
+    });
   },
 
   //middleware to check if user is an instructor or admin
@@ -36,6 +38,8 @@ export default {
     ) {
       return next();
     }
-    return res.status(403).send('Access Denied');
+    return res.status(403).render('403', { 
+      layout: false, error: { status: 403, message: 'Access Denied' } 
+    });
   }
 };

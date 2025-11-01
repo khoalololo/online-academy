@@ -82,18 +82,14 @@
 
                 <!-- Lesson Info -->
                 <div class="flex-1">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <h3 class="font-semibold text-gray-900">{{add @index 1}}. {{this.title}}</h3>
-                      {{#if this.description}}
-                        <p class="text-sm text-gray-600 mt-1">{{this.description}}</p>
-                      {{/if}}
-                    </div>
-                  </div>
+                  <h3 class="font-semibold text-gray-900">{{add @index 1}}. {{this.title}}</h3>
+                  {{#if this.description}}
+                    <p class="text-sm text-gray-600 mt-1 line-clamp-2">{{this.description}}</p>
+                  {{/if}}
                   
-                  <div class="flex items-center mt-2 space-x-4 text-xs text-gray-500">
+                  <div class="flex items-center mt-3 space-x-4 text-xs text-gray-500">
                     {{#if this.duration}}
-                      <span class="flex items-center">
+                      <span class="flex items-center" title="Lesson duration">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -101,21 +97,21 @@
                         {{div this.duration 60}} min
                       </span>
                     {{/if}}
+                    {{#if this.video_url}}
+                      <span class="flex items-center text-indigo-600 font-medium" title="Video is attached">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        Video
+                      </span>
+                    {{/if}}
                     {{#if this.is_preview}}
-                      <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
-                        <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span class="inline-flex items-center bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-semibold" title="This lesson can be previewed by anyone">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                         </svg>
                         Preview
-                      </span>
-                    {{/if}}
-                    {{#if this.video_url}}
-                      <span class="flex items-center text-indigo-600">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                        </svg>
-                        Video attached
                       </span>
                     {{/if}}
                   </div>
@@ -236,39 +232,81 @@
           <p class="text-xs text-gray-500 mt-1">Optional - helps students know what to expect</p>
         </div>
 
-        <!-- Video URL -->
+        <!-- Video Source Selection -->
         <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Video Source <span class="text-red-500">*</span>
+          </label>
+          <select id="videoSourceType" onchange="toggleVideoSource()" 
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white mb-3">
+            <option value="url">YouTube/Vimeo URL</option>
+            <option value="upload">Upload Video File</option>
+          </select>
+        </div>
+
+        <!-- URL Input -->
+        <div id="urlInputSection">
           <label class="block text-sm font-medium text-gray-700 mb-2">
             Video URL <span class="text-red-500">*</span>
           </label>
           <input id="lessonVideoUrl" type="url" required
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                 placeholder="https://www.youtube.com/embed/VIDEO_ID">
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="https://www.youtube.com/embed/VIDEO_ID">
           <p class="text-xs text-gray-500 mt-1">
             YouTube: <code class="bg-gray-100 px-1 rounded">youtube.com/embed/VIDEO_ID</code> |
             Vimeo: <code class="bg-gray-100 px-1 rounded">player.vimeo.com/video/ID</code>
           </p>
         </div>
 
+        <!-- File Upload Section -->
+        <div id="uploadInputSection" class="hidden">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Upload Video File <span class="text-red-500">*</span>
+          </label>
+          <input id="videoFileInput" type="file" accept="video/*"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white
+                        file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 
+                        file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 
+                        hover:file:bg-indigo-100 cursor-pointer">
+          <p class="text-xs text-gray-500 mt-1">Supported: MP4, WebM, OGG, MOV (max 100MB)</p>
+          
+          <!-- Upload Progress -->
+          <div id="uploadProgress" class="hidden mt-3">
+            <div class="flex items-center justify-between text-sm mb-1">
+              <span class="text-gray-600">Uploading...</span>
+              <span id="uploadPercent" class="font-semibold text-indigo-600">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div id="uploadProgressBar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <!-- Hidden field to store uploaded URL -->
+          <input type="hidden" id="uploadedVideoUrl">
+        </div>
+
         <!-- Duration and Preview -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              Duration (minutes) <span class="text-red-500">*</span>
+              Duration (minutes)
             </label>
-            <input id="lessonDuration" type="number" min="0" step="0.5" required
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                   placeholder="15">
-            <p class="text-xs text-gray-500 mt-1">Approximate length in minutes</p>
+            <input id="lessonDuration" type="number" min="0" step="1"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="e.g., 15">
+            <p class="text-xs text-gray-500 mt-1">Optional - total lesson time in minutes</p>
           </div>
-          <div class="flex items-center justify-center">
-            <label class="flex items-center space-x-3 cursor-pointer">
-              <input id="lessonPreview" type="checkbox" class="h-5 w-5 text-indigo-600 rounded focus:ring-indigo-500">
-              <div>
-                <span class="text-sm font-medium text-gray-700">Preview Lesson</span>
-                <p class="text-xs text-gray-500">Free for all to view</p>
-              </div>
-            </label>
+          <div class="flex items-center justify-start pt-6">
+            <div class="flex items-center h-5">
+              <input id="lessonPreview" type="checkbox"
+                    class="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-gray-300 rounded">
+            </div>
+            <div class="ml-3 text-sm">
+              <label for="lessonPreview" class="font-medium text-gray-700">
+                Allow Preview
+              </label>
+              <p class="text-gray-500 text-xs">Allow users to watch this lesson without enrolling.</p>
+            </div>
           </div>
         </div>
 
@@ -297,6 +335,12 @@
 function showAddLessonModal() {
   document.getElementById('lessonId').value = '';
   document.getElementById('lessonForm').reset();
+  document.getElementById('videoSourceType').value = 'url';
+  document.getElementById('uploadedVideoUrl').value = '';
+  document.getElementById('uploadProgress').classList.add('hidden');
+  document.getElementById('uploadProgressBar').style.width = '0%';
+  document.getElementById('uploadPercent').textContent = '0%';
+  toggleVideoSource(); // Show URL input by default
   document.getElementById('modalTitle').textContent = 'Add Lesson';
   document.getElementById('lessonModal').classList.remove('hidden');
 }
@@ -306,18 +350,120 @@ function closeLessonModal() {
   document.getElementById('lessonModal').classList.add('hidden');
 }
 
-// Edit Lesson
+// Toggle between URL and Upload
+function toggleVideoSource() {
+  const sourceType = document.getElementById('videoSourceType').value;
+  const urlSection = document.getElementById('urlInputSection');
+  const uploadSection = document.getElementById('uploadInputSection');
+  const urlInput = document.getElementById('lessonVideoUrl');
+  
+  if (sourceType === 'upload') {
+    urlSection.classList.add('hidden');
+    uploadSection.classList.remove('hidden');
+    urlInput.removeAttribute('required');
+  } else {
+    urlSection.classList.remove('hidden');
+    uploadSection.classList.add('hidden');
+    urlInput.setAttribute('required', 'required');
+  }
+}
+
+// Upload video file
+async function uploadVideoFile() {
+  const fileInput = document.getElementById('videoFileInput');
+  const file = fileInput.files[0];
+  
+  if (!file) {
+    throw new Error('Please select a video file');
+  }
+
+  // Validate file size (100MB)
+  if (file.size > 100 * 1024 * 1024) {
+    throw new Error('Video file must be less than 100MB');
+  }
+
+  const formData = new FormData();
+  formData.append('video', file);
+
+  // Show progress
+  document.getElementById('uploadProgress').classList.remove('hidden');
+  
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    // Progress tracking
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        document.getElementById('uploadPercent').textContent = percent + '%';
+        document.getElementById('uploadProgressBar').style.width = percent + '%';
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        document.getElementById('uploadProgress').classList.add('hidden');
+        resolve(data.videoUrl);
+      } else {
+        document.getElementById('uploadProgress').classList.add('hidden');
+        reject(new Error('Upload failed'));
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      document.getElementById('uploadProgress').classList.add('hidden');
+      reject(new Error('Upload failed'));
+    });
+
+    xhr.open('POST', `/instructor/lessons/{{course.proid}}/upload-video`);
+    xhr.send(formData);
+  });
+}
+
+// Edit Lesson 
 async function editLesson(id) {
   try {
     const response = await fetch(`/instructor/lessons/${id}/get`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Throw an error to be caught by the catch block
+      throw new Error(errorData.message || `Server responded with status ${response.status}`);
+    }
+
     const lesson = await response.json();
 
+    // Set form values
     document.getElementById('lessonId').value = lesson.id;
     document.getElementById('lessonTitle').value = lesson.title || '';
     document.getElementById('lessonDescription').value = lesson.description || '';
-    document.getElementById('lessonVideoUrl').value = lesson.video_url || '';
     document.getElementById('lessonDuration').value = lesson.duration ? lesson.duration / 60 : '';
     document.getElementById('lessonPreview').checked = !!lesson.is_preview;
+    
+    // Determine video source type
+    const videoUrl = lesson.video_url || '';
+    if (videoUrl.startsWith('/static/uploads/videos/')) {
+      // It's an uploaded video
+      document.getElementById('videoSourceType').value = 'upload';
+      document.getElementById('uploadedVideoUrl').value = videoUrl;
+      toggleVideoSource();
+      
+      // Show filename in upload section
+      const filename = videoUrl.split('/').pop();
+      const uploadSection = document.getElementById('uploadInputSection');
+      let fileInfoDiv = uploadSection.querySelector('.file-info');
+      if (!fileInfoDiv) {
+        fileInfoDiv = document.createElement('div');
+        fileInfoDiv.className = 'file-info mt-2 p-2 bg-green-50 rounded text-sm text-green-700';
+        uploadSection.appendChild(fileInfoDiv);
+      }
+      fileInfoDiv.innerHTML = `✓ Current video: <strong>${filename}</strong><br><small class="text-xs">Upload a new file to replace it</small>`;
+    } else {
+      // It's a URL (YouTube/Vimeo)
+      document.getElementById('videoSourceType').value = 'url';
+      document.getElementById('lessonVideoUrl').value = videoUrl;
+      toggleVideoSource();
+    }
     
     document.getElementById('modalTitle').textContent = 'Edit Lesson';
     document.getElementById('lessonModal').classList.remove('hidden');
@@ -325,7 +471,7 @@ async function editLesson(id) {
     console.error('Error loading lesson:', error);
     Swal.fire({
       title: 'Error!',
-      text: 'Failed to load lesson details',
+      text: error.message || 'Failed to load lesson details',
       icon: 'error',
       confirmButtonColor: '#4F46E5'
     });
@@ -377,44 +523,69 @@ async function deleteLesson(id, title) {
   }
 }
 
-// Submit Lesson Form (Add or Update)
+// Submit Lesson Form (Add or Update) - FIXED VERSION
 document.getElementById('lessonForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const lessonId = document.getElementById('lessonId').value;
   const durationMinutes = parseFloat(document.getElementById('lessonDuration').value);
+  const sourceType = document.getElementById('videoSourceType').value;
   
-  const payload = {
-    title: document.getElementById('lessonTitle').value.trim(),
-    description: document.getElementById('lessonDescription').value.trim(),
-    video_url: document.getElementById('lessonVideoUrl').value.trim(),
-    duration: Math.round(durationMinutes * 60), // Convert to seconds
-    is_preview: document.getElementById('lessonPreview').checked
-  };
-
-  // Validate video URL format
-  const videoUrl = payload.video_url;
-  const isYouTube = videoUrl.includes('youtube.com/embed/');
-  const isVimeo = videoUrl.includes('player.vimeo.com/video/');
-  
-  if (!isYouTube && !isVimeo) {
-    Swal.fire({
-      title: 'Invalid URL',
-      html: 'Please use a valid embed URL:<br><br>' +
-            '<strong>YouTube:</strong> https://www.youtube.com/embed/VIDEO_ID<br>' +
-            '<strong>Vimeo:</strong> https://player.vimeo.com/video/VIDEO_ID',
-      icon: 'warning',
-      confirmButtonColor: '#4F46E5'
-    });
-    return;
-  }
-
-  const method = lessonId ? 'PUT' : 'POST';
-  const url = lessonId 
-    ? `/instructor/lessons/${lessonId}/update` 
-    : `/instructor/lessons/{{course.proid}}/add`;
-
   try {
+    let videoUrl;
+
+    // Handle video source
+    if (sourceType === 'upload') {
+      const uploadedUrl = document.getElementById('uploadedVideoUrl').value;
+      const fileInput = document.getElementById('videoFileInput');
+      
+      if (fileInput.files.length > 0) {
+        // Upload new file
+        videoUrl = await uploadVideoFile();
+        document.getElementById('uploadedVideoUrl').value = videoUrl;
+      } else if (uploadedUrl) {
+        // Use previously uploaded file (for edit)
+        videoUrl = uploadedUrl;
+      } else {
+        throw new Error('Please select a video file to upload');
+      }
+    } else {
+      // Use URL
+      videoUrl = document.getElementById('lessonVideoUrl').value.trim();
+      
+      if (!videoUrl) {
+        throw new Error('Please enter a video URL');
+      }
+      
+      // Validate embed URL format
+      const isYouTube = videoUrl.includes('youtube.com/embed/');
+      const isVimeo = videoUrl.includes('player.vimeo.com/video/');
+      
+      if (!isYouTube && !isVimeo) {
+        return Swal.fire({
+          title: 'Invalid URL',
+          html: 'Please use a valid embed URL:<br><br>' +
+                '<strong>YouTube:</strong> https://www.youtube.com/embed/VIDEO_ID<br>' +
+                '<strong>Vimeo:</strong> https://player.vimeo.com/video/VIDEO_ID',
+          icon: 'warning',
+          confirmButtonColor: '#4F46E5'
+        });
+      }
+    }
+
+    const payload = {
+      title: document.getElementById('lessonTitle').value.trim(),
+      description: document.getElementById('lessonDescription').value.trim(),
+      video_url: videoUrl,
+      duration: Math.round(durationMinutes * 60),
+      is_preview: document.getElementById('lessonPreview').checked
+    };
+
+    const method = lessonId ? 'PUT' : 'POST';
+    const url = lessonId 
+      ? `/instructor/lessons/${lessonId}/update` 
+      : `/instructor/lessons/{{course.proid}}/add`;
+
     const response = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -437,6 +608,10 @@ document.getElementById('lessonForm').addEventListener('submit', async (e) => {
     }
   } catch (error) {
     console.error('Error:', error);
+    
+    // Hide progress on error
+    document.getElementById('uploadProgress').classList.add('hidden');
+    
     Swal.fire({
       title: 'Error!',
       text: error.message || 'Failed to save lesson',
@@ -459,24 +634,26 @@ document.getElementById('lessonModal').addEventListener('click', (e) => {
     closeLessonModal();
   }
 });
-async function toggleCourseCompletion(courseId, markComplete) {
-    try {
-      const res = await fetch(`/instructor/courses/${courseId}/completion`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_completed: markComplete })
-      });
 
-      const result = await res.json();
-      if (result.success) {
-        window.location.reload();
-      } else {
-        alert(result.message || 'Failed to update course status.');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred while updating course status.');
+// Toggle course completion
+async function toggleCourseCompletion(courseId, markComplete) {
+  try {
+    const res = await fetch(`/instructor/courses/${courseId}/completion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_completed: markComplete })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      window.location.reload();
+    } else {
+      alert(result.message || 'Failed to update course status.');
     }
+  } catch (err) {
+    console.error(err);
+    alert('An error occurred while updating course status.');
   }
+}
 </script>
 {{/section}}

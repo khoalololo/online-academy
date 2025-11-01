@@ -119,17 +119,30 @@
                 </div>
                 
                 <div class="flex items-center space-x-3">
-                    <form action="/products/search" method="get" class="hidden lg:flex items-center relative">
+                    <form action="/products/search" method="get" class="hidden lg:flex items-center relative" id="searchForm">
                         <input
                             type="text"
                             name="q"
-                            placeholder="Search products..."
-                            class="pl-10 pr-4 py-2 w-64 text-sm border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 outline-none transition-all duration-200"
+                            id="searchInput"
+                            placeholder="Search courses..."
+                            autocomplete="off"
+                            class="pl-10 pr-4 py-2 w-64 text-sm border border-gray-300 rounded-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all duration-200"
                             required
                         />
-                        <svg class="absolute left-3 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="absolute left-3 h-5 w-5 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
+                        
+                        <!-- Autocomplete Dropdown -->
+                        <div id="searchSuggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                            <!-- Loading state -->
+                            <div id="searchLoading" class="hidden p-4 text-center">
+                                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                                <p class="text-sm text-gray-500 mt-2">Searching...</p>
+                            </div>
+                            <!-- Results will be inserted here -->
+                            <div id="searchResults"></div>
+                        </div>
                     </form>
                     {{#unless isAuthenticated}}
                         <!-- Guest Users -->
@@ -279,6 +292,189 @@
     </div>
     <script src="/static/scripts/scripts.js" defer></script>
     {{{_sections.js}}}
+
+    <script>
+    (function() {
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('searchSuggestions');
+        const searchResults = document.getElementById('searchResults');
+        const searchLoading = document.getElementById('searchLoading');
+        const searchForm = document.getElementById('searchForm');
+        let debounceTimer;
+        let currentQuery = '';
+
+        if (!searchInput || !suggestionsBox) return;
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+            currentQuery = query;
+
+            if (query.length < 2) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            searchLoading.classList.remove('hidden');
+            searchResults.innerHTML = '';
+            suggestionsBox.classList.remove('hidden');
+
+            debounceTimer = setTimeout(() => {
+                fetchSuggestions(query);
+            }, 300);
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+            const items = suggestionsBox.querySelectorAll('a');
+            const activeItem = suggestionsBox.querySelector('a.bg-gray-100');
+            let currentIndex = Array.from(items).indexOf(activeItem);
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (currentIndex < items.length - 1) {
+                    items[currentIndex]?.classList.remove('bg-gray-100');
+                    items[currentIndex + 1]?.classList.add('bg-gray-100');
+                    items[currentIndex + 1]?.scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (currentIndex > 0) {
+                    items[currentIndex]?.classList.remove('bg-gray-100');
+                    items[currentIndex - 1]?.classList.add('bg-gray-100');
+                    items[currentIndex - 1]?.scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Enter' && activeItem) {
+                e.preventDefault();
+                activeItem.click();
+            } else if (e.key === 'Escape') {
+                suggestionsBox.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.classList.add('hidden');
+            }
+        });
+
+        searchInput.addEventListener('focus', function() {
+            if (currentQuery.length >= 2 && searchResults.innerHTML) {
+                suggestionsBox.classList.remove('hidden');
+            }
+        });
+
+        async function fetchSuggestions(query) {
+            try {
+                const response = await fetch(`/api/search-suggestions?q=${encodeURIComponent(query)}`);
+                
+                if (!response.ok) {
+                    throw new Error('Search failed');
+                }
+
+                const suggestions = await response.json();
+                searchLoading.classList.add('hidden');
+
+                if (suggestions.length === 0) {
+                    searchResults.innerHTML = `
+                        <div class="p-4 text-center text-gray-500 text-sm">
+                            <svg class="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            No results found for "<strong>${escapeHtml(query)}</strong>"
+                            <div class="mt-2">
+                                <button type="button" onclick="document.getElementById('searchForm').submit()" 
+                                        class="text-indigo-600 hover:text-indigo-700 text-sm font-semibold">
+                                    Search anyway →
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const html = suggestions.map((course, index) => `
+                    <a href="/products/${course.proid}" 
+                    class="flex items-center p-3 hover:bg-gray-100 transition-colors border-b border-gray-100 last:border-0 ${index === 0 ? 'bg-gray-50' : ''}"
+                    onmouseover="this.classList.add('bg-gray-100')"
+                    onmouseout="this.classList.remove('bg-gray-100')">
+                        <img src="${course.thumbnail || '/static/images/default-course.png'}" 
+                            alt="${escapeHtml(course.proname)}"
+                            class="w-12 h-12 object-cover rounded border border-gray-200">
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">${highlightMatch(course.proname, query)}</p>
+                        </div>
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                `).join('');
+
+                searchResults.innerHTML = html + `
+                    <div class="p-3 bg-gray-50 border-t border-gray-200 text-center">
+                        <button type="button" onclick="document.getElementById('searchForm').submit()" 
+                                class="text-sm text-indigo-600 hover:text-indigo-700 font-semibold">
+                            View all results for "${escapeHtml(query)}" →
+                        </button>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Search suggestions error:', error);
+                searchLoading.classList.add('hidden');
+                searchResults.innerHTML = `
+                    <div class="p-4 text-center text-red-600 text-sm">
+                        <svg class="mx-auto h-8 w-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Failed to load suggestions. Please try again.
+                    </div>
+                `;
+            }
+        }
+
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+            return escapeHtml(text).replace(regex, '<mark class="bg-yellow-200 font-semibold">$1</mark>');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    })();
+    </script>
+
+    <style>
+    #searchSuggestions mark {
+        background-color: #fef3c7;
+        font-weight: 600;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+
+    #searchSuggestions a {
+        cursor: pointer;
+    }
+
+    #searchSuggestions .truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+    </style>
 
 </body>
 </html>

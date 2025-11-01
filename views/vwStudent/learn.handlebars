@@ -260,7 +260,12 @@ function initializePlayer(videoUrl) {
 function parseVideoUrl(url) {
     if (!url) return { provider: null, videoId: null };
 
-    // YouTube patterns
+    // Check if it's a local uploaded video
+    if (url.startsWith('/static/uploads/videos/')) {
+        return { provider: 'html5', videoId: url };
+    }
+
+    // YouTube patterns (existing code)
     const youtubePatterns = [
         /(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
         /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
@@ -273,7 +278,7 @@ function parseVideoUrl(url) {
         }
     }
 
-    // Vimeo patterns
+    // Vimeo patterns (existing code)
     const vimeoPattern = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
     const vimeoMatch = url.match(vimeoPattern);
     if (vimeoMatch) {

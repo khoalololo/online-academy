@@ -44,6 +44,41 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// --- Video Upload Configuration ---
+const videoUploadDir = 'static/uploads/videos';
+if (!fs.existsSync(videoUploadDir)) {
+  fs.mkdirSync(videoUploadDir, { recursive: true });
+}
+
+const videoStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, videoUploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'video-' + uniqueSuffix + ext);
+  }
+});
+
+const videoFileFilter = (req, file, cb) => {
+  const allowedTypes = /mp4|webm|ogg|mov/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = file.mimetype.startsWith('video/');
+  
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only video files are allowed (mp4, webm, ogg, mov)'));
+  }
+};
+
+const videoUpload = multer({
+  storage: videoStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+  fileFilter: videoFileFilter
+});
+
 // Apply instructor authentication to all routes
 router.use(authMdw.isInstructor);
 
@@ -147,7 +182,11 @@ router.post('/courses/create', upload.single('thumbnail'), async (req, res) => {
     
     const newCourse = await courseModel.createByInstructor(courseData);
     
-    res.redirect(`/instructor/courses/${newCourse.proid}/lessons`);
+    if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+      return res.json({ success: true, courseId: newCourse.proid });
+    } else {
+      return res.redirect(`/instructor/courses/${newCourse.proid}/lessons`);
+    }
   } catch (error) {
     console.error('Course creation error:', error);
     const categories = await categoryModel.getHierarchicalMenu();
@@ -491,6 +530,40 @@ router.post('/lessons/:proid/reorder', async (req, res) => {
     });
   }
 });
+
+// [POST] /instructor/lessons/:proid/upload-video - Upload video file
+router.post('/lessons/:proid/upload-video', authMdw.isInstructor, videoUpload.single('video'), async (req, res) => {
+  try {
+    const proid = +req.params.proid;
+    const instructorId = req.session.authUser.id;
+    
+    // Verify course ownership
+    const course = await courseModel.findById(proid);
+    if (!course || course.instructor_id !== instructorId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied' 
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No video file uploaded' });
+    }
+
+    const videoPath = `/static/uploads/videos/${req.file.filename}`;
+    
+    res.json({ 
+      success: true, 
+      message: 'Video uploaded successfully',
+      videoUrl: videoPath 
+    });
+  } catch (error) {
+    console.error('Video upload error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// [POST] /instructor/courses/:proid/completion - Toggle course completion status
 
 router.post('/courses/:proid/completion', async (req, res) => {
   try {

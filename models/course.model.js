@@ -48,6 +48,7 @@ export const getBaseQuery = _getBaseQuery;
 export default {
     async findTopViewed() {
         const courses = await _getBaseQuery()
+        .where('c.is_disabled', false) // EXCLUDE DISABLED
             .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name',
                 'ratings.average_rating', 'ratings.rating_count')
@@ -61,6 +62,7 @@ export default {
     },
     async findTopNewest() {
         const courses = await _getBaseQuery()
+        .where('c.is_disabled', false) // EXCLUDE DISABLED
             .select('c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name',
                 'ratings.average_rating', 'ratings.rating_count')
@@ -95,13 +97,14 @@ export default {
         const offset = (page - 1) * limit;
         
         const courses = await _getBaseQuery()
+            .where('c.is_disabled', false) // EXCLUDE DISABLED
             .select('c.proid', 'c.proname', 'c.thumbnail',  'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name', 'c.is_completed',
                 'ratings.average_rating', 'ratings.rating_count')
             .orderBy('c.last_updated', 'desc')
             .limit(limit)
             .offset(offset);
-        const [{ count }] = await db('courses').count('proid as count');
+        const [{ count }] = await db('courses as c').where('c.is_disabled', false).count('proid as count');
 
         // Ensure average_rating is a number, not a string from the DB.
         courses.forEach(course => {
@@ -123,6 +126,7 @@ export default {
         const offset = (page - 1) * limit;
         
         const courses = await _getBaseQuery()
+            .where('c.is_disabled', false) // EXCLUDE DISABLED
             .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
             .select('c.proid', 'c.proname', 'c.thumbnail', 'c.tinydes', 'c.price', 'c.promo_price', 'c.views',
                 'cat.name as category_name', 'u.name as instructor_name', 'c.is_completed',
@@ -130,7 +134,7 @@ export default {
             .orderBy('c.last_updated', 'desc')
             .limit(limit)
             .offset(offset);
-        const [{ count }] = await db('courses').whereIn('catid', Array.isArray(catid) ? catid : [catid]).count('proid as count');
+        const [{ count }] = await db('courses as c').whereIn('c.catid', Array.isArray(catid) ? catid : [catid]).where('c.is_disabled', false).count('proid as count');
 
         courses.forEach(course => {
             if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
@@ -153,25 +157,113 @@ export default {
             .increment('views', 1);
     },
 
+
     async search(query, catid = null, sortBy = 'relevance', page = 1, limit = 6) {
         const offset = (page - 1) * limit;
-        let coursesQuery = _getBaseQuery();
-        let countQuery = db('courses as c');
+        
+        // Normalize query for better matching
+        const normalizedQuery = query ? query.toLowerCase().trim() : '';
+        
+        let coursesQuery = db('courses as c')
+            .join('categories as cat', 'c.catid', 'cat.id')
+            .join('users as u', 'c.instructor_id', 'u.id')
+            .leftJoin(
+                db('reviews')
+                    .select('proid')
+                    .avg('rating as average_rating')
+                    .count('id as rating_count')
+                    .groupBy('proid')
+                    .as('ratings'),
+                'c.proid',
+                'ratings.proid'
+            )
+            .leftJoin(
+                db('enrollment')
+                    .select('proid')
+                    .count('user_id as enrollment_count')
+                    .groupBy('proid')
+                    .as('enrollments'),
+                'c.proid',
+                'enrollments.proid'
+            )
+            .select(
+                'c.proid',
+                'c.proname',
+                'c.tinydes',
+                'c.price',
+                'c.promo_price',
+                'c.last_updated',
+                'c.thumbnail',
+                'c.is_disabled',
+                'c.is_completed',
+                'cat.name as category_name',
+                'u.name as instructor_name',
+                db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+                db.raw('COALESCE(ratings.rating_count, 0) as rating_count'),
+                db.raw('COALESCE(enrollments.enrollment_count, 0) as enrollment_count')
+            )
+            .where('c.is_disabled', false); // Exclude disabled courses
 
-        if (query) {
-            // Fixed: Use proper Knex parameter binding
-            const ftsMatch = `c.fts @@ websearch_to_tsquery('simple', ?)`;
+        let countQuery = db('courses as c')
+            .where('c.is_disabled', false);
+
+        // Apply search filters
+        if (query && query.trim()) {
+            // Multi-strategy search:
+            // 1. Exact substring match 
+            // 2. Full-text search
+            // 3. Fuzzy match for typos
             
-            coursesQuery = coursesQuery.whereRaw(ftsMatch, [query]);
-            countQuery = countQuery.whereRaw(ftsMatch, [query]);
+            coursesQuery = coursesQuery.where(function() {
+                // Strategy 1: Exact match (accent-insensitive)
+                this.whereRaw(`unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`unaccent(LOWER(c.tinydes)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`unaccent(LOWER(c.fulldes)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    // Strategy 2: Full-text search
+                    .orWhereRaw(`c.fts @@ websearch_to_tsquery('vietnamese', ?)`, [query])
+                    // Strategy 3: Fuzzy match (typo tolerance)
+                    .orWhereRaw(`similarity(c.search_text_normalized, unaccent(LOWER(?))) > 0.3`, [normalizedQuery]);
+            });
+
+            countQuery = countQuery.where(function() {
+                this.whereRaw(`unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`unaccent(LOWER(c.tinydes)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`unaccent(LOWER(c.fulldes)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`c.fts @@ websearch_to_tsquery('vietnamese', ?)`, [query])
+                    .orWhereRaw(`similarity(c.search_text_normalized, unaccent(LOWER(?))) > 0.3`, [normalizedQuery]);
+            });
+
+            // Add relevance scoring for better sorting
+            if (sortBy === 'relevance') {
+                coursesQuery = coursesQuery.select(
+                    db.raw(`
+                        CASE 
+                            WHEN unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?)) THEN 100
+                            WHEN c.fts @@ websearch_to_tsquery('vietnamese', ?) THEN 
+                                50 + (ts_rank(c.fts, websearch_to_tsquery('vietnamese', ?)) * 50)
+                            ELSE 
+                                similarity(c.search_text_normalized, unaccent(LOWER(?))) * 30
+                        END as relevance_score
+                    `, [`%${normalizedQuery}%`, query, query, normalizedQuery])
+                );
+            }
         }
 
+        // Category filter
         if (catid) {
             coursesQuery = coursesQuery.andWhere('c.catid', catid);
             countQuery = countQuery.andWhere('c.catid', catid);
         }
 
+        // Sorting logic
         switch (sortBy) {
+            case 'relevance':
+                if (query && query.trim()) {
+                    coursesQuery = coursesQuery.orderByRaw('relevance_score DESC, c.views DESC');
+                } else {
+                    coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+                }
+                break;
             case 'price_asc':
                 coursesQuery = coursesQuery.orderBy(db.raw('COALESCE(c.promo_price, c.price)'), 'asc');
                 break;
@@ -185,16 +277,16 @@ export default {
                 coursesQuery = coursesQuery.orderBy('enrollment_count', 'desc');
                 break;
             case 'newest':
-            case 'relevance': // Defaulting relevance to newest
             default:
                 coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
                 break;
         }
 
+        // Execute queries
         const courses = await coursesQuery.limit(limit).offset(offset);
         const [{ count }] = await countQuery.count('c.proid as count');
 
-        // Add 'New' and 'Best Seller' Tags
+        // Add badges (New, Best Seller)
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -205,7 +297,6 @@ export default {
             if (new Date(course.last_updated) > thirtyDaysAgo) {
                 course.isNew = true;
             }
-            // Ensure average_rating is a number
             if (course.average_rating) {
                 course.average_rating = parseFloat(parseFloat(course.average_rating).toFixed(1));
             }
@@ -220,6 +311,32 @@ export default {
                 totalPages: Math.ceil(parseInt(count) / limit)
             }
         };
+    },
+
+    async searchSuggestions(query, limit = 5) {
+        if (!query || query.trim().length < 2) {
+            return [];
+        }
+
+        const normalizedQuery = query.toLowerCase().trim();
+
+        const suggestions = await db('courses')
+            .where('is_disabled', false)
+            .where(function() {
+                this.whereRaw(`unaccent(LOWER(proname)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+                    .orWhereRaw(`similarity(search_text_normalized, unaccent(LOWER(?))) > 0.3`, [normalizedQuery]);
+            })
+            .select('proid', 'proname', 'thumbnail')
+            .orderByRaw(`
+                CASE 
+                    WHEN unaccent(LOWER(proname)) LIKE unaccent(LOWER(?)) THEN 1
+                    ELSE 2
+                END
+            `, [`${normalizedQuery}%`])
+            .orderBy('views', 'desc')
+            .limit(limit);
+
+        return suggestions;
     },
 
     // ==================== INSTRUCTOR METHODS ====================

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Access Denied</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="text-center p-8">
+        <h1 class="text-8xl font-bold text-red-500">{{#if error.status}}{{error.status}}{{else}}403{{/if}}</h1>
+        <p class="text-2xl font-light text-gray-700 mt-4">{{#if error.message}}{{error.message}}{{else}}Access Denied{{/if}}</p>
+        <p class="mt-4 text-gray-500">Sorry, you do not have the necessary permissions to access this page.</p>
+        <a href="/" class="mt-8 inline-block bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300">
+            Go to Homepage
+        </a>
+    </div>
+</body>
+</html>

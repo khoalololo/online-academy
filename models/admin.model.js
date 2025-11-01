@@ -253,6 +253,101 @@ export default {
   // ==================== COURSE MANAGEMENT ====================
 
   /**
+   * Get all courses with filtering, pagination, and search
+   */
+  async getAllCourses(options = {}) {
+    const {
+      page = 1,
+      limit = 12,
+      search = '',
+      status = '',
+      categoryId = null
+    } = options;
+
+    const offset = (page - 1) * limit;
+
+    // Build the base query
+    let query = db('courses as c')
+      .join('categories as cat', 'c.catid', 'cat.id')
+      .join('users as u', 'c.instructor_id', 'u.id')
+      .leftJoin(
+        db('reviews')
+          .select('proid')
+          .avg('rating as average_rating')
+          .count('id as rating_count')
+          .groupBy('proid')
+          .as('ratings'),
+        'c.proid',
+        'ratings.proid'
+      )
+      .leftJoin(
+        db('enrollment')
+          .select('proid')
+          .count('user_id as enrollment_count')
+          .groupBy('proid')
+          .as('enrollments'),
+        'c.proid',
+        'enrollments.proid'
+      );
+
+    // Apply search filter (using FTS if search term provided)
+    if (search) {
+      const normalizedQuery = search.toLowerCase().trim();
+      query = query.where(function() {
+        // Strategy 1: Exact match (accent-insensitive)
+        this.whereRaw(`unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+            .orWhereRaw(`unaccent(LOWER(c.tinydes)) LIKE unaccent(LOWER(?))`, [`%${normalizedQuery}%`])
+            // Strategy 2: Full-text search (using 'simple' config for admin)
+            .orWhereRaw(`c.fts @@ websearch_to_tsquery('simple', ?)`, [search])
+            // Strategy 3: Fuzzy match (typo tolerance)
+            .orWhereRaw(`similarity(c.search_text_normalized, unaccent(LOWER(?))) > 0.3`, [normalizedQuery]);
+      });
+    }
+
+    // Apply status filter
+    if (status === 'active') {
+      query = query.where('c.is_disabled', false);
+    } else if (status === 'disabled') {
+      query = query.where('c.is_disabled', true);
+    }
+
+    // Apply category filter
+    if (categoryId) {
+      query = query.where('c.catid', categoryId);
+    }
+
+    // Get total count for pagination before applying select
+    const countQuery = query.clone();
+    const [{ count }] = await countQuery.clearSelect().count('c.proid as count');
+    const total = parseInt(count);
+    const totalPages = Math.ceil(total / limit);
+
+    // Get paginated results with select
+    const courses = await query
+      .select(
+        'c.proid', 'c.proname', 'c.tinydes', 'c.price', 'c.promo_price',
+        'c.last_updated', 'c.thumbnail', 'c.is_disabled', 'c.is_completed',
+        'cat.name as category_name', 'u.name as instructor_name',
+        db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+        db.raw('COALESCE(ratings.rating_count, 0) as rating_count'),
+        db.raw('COALESCE(enrollments.enrollment_count, 0) as enrollment_count')
+      )
+      .orderBy('c.last_updated', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      courses,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages
+      }
+    };
+  },
+
+  /**
    * Toggle course enabled/disabled status
    */
   async toggleCourseStatus(proid) {

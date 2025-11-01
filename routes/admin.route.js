@@ -114,15 +114,33 @@ router.delete('/categories/:id/delete', async (req, res) => {
 
 // ==================== COURSE MANAGEMENT ====================
 
-// [GET] /admin/courses - List all courses
+// [GET] /admin/courses - List all courses with filters
 router.get('/courses', async (req, res) => {
   try {
     const page = +req.query.page || 1;
     const limit = 12;
-    const result = await courseModel.findAll(page, limit); 
+    const search = req.query.search || '';
+    const status = req.query.status || '';
+    const categoryId = req.query.category ? +req.query.category : null;
 
+    const { courses, pagination } = await adminModel.getAllCourses({
+      page,
+      limit,
+      search,
+      status,
+      categoryId
+    });
+
+    // Format ratings
+    courses.forEach(course => {
+      if (course.average_rating) {
+        course.average_rating = parseFloat(course.average_rating);
+      }
+    });
+
+    // Generate page numbers
     const pageNumbers = [];
-    for (let i = 1; i <= result.pagination.totalPages; i++) {
+    for (let i = 1; i <= pagination.totalPages; i++) {
       pageNumbers.push({
         value: i,
         isCurrent: i === page
@@ -131,20 +149,26 @@ router.get('/courses', async (req, res) => {
 
     res.render('vwAdmin/courses', {
       title: 'Manage Courses',
-      courses: result.courses,
+      courses,
       pagination: {
-        ...result.pagination,
+        ...pagination,
         pageNumbers
+      },
+      searchParams: {
+        search,
+        status,
+        category: categoryId
       }
     });
   } catch (error) {
     console.error('Error fetching courses:', error);
-    res.status(500).render('500', { 
-      layout: false, 
-      error: { status: 500, message: 'Internal Server Error' } 
+    res.status(500).render('500', {
+      layout: false,
+      error: { status: 500, message: 'Internal Server Error' }
     });
   }
 });
+
 
 // [POST] /admin/courses/:proid/toggle-disable - Enable/Disable course
 router.post('/courses/:proid/toggle-disable', async (req, res) => {
@@ -201,8 +225,6 @@ router.get('/users', async (req, res) => {
     const page = +req.query.page || 1;
     const limit = 20;
     const role = req.query.role ? +req.query.role : null; // Filter by role
-
-    // ✨ REFACTORED: Replaced db query with model call
     const result = await adminModel.getUsers(page, limit, role);
 
     const pageNumbers = [];
