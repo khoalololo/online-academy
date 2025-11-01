@@ -4,6 +4,9 @@
   "description": "Final Project for Online Academy web application.",
   "main": "main.js",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",

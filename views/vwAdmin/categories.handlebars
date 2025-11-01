@@ -200,6 +200,101 @@
 
 {{#section 'js'}}
 <script>
+// Category name validation
+const categoryNameInput = document.getElementById('categoryName');
+if (categoryNameInput) {
+    let typingTimer;
+    const doneTypingInterval = 500; // Wait 500ms after typing stops    
+    categoryNameInput.addEventListener('input', function() {
+        clearTimeout(typingTimer);
+        const name = this.value.trim();        
+        // Clear previous validation
+        clearValidationMessage(this);        
+        if (name.length === 0) return;        
+        // Basic validation
+        if (name.length < 3) {
+            showValidationMessage(this, 'Category name must be at least 3 characters', 'error');
+            return;
+        }        
+        if (name.length > 100) {
+            showValidationMessage(this, 'Category name must not exceed 100 characters', 'error');
+            return;
+        }        
+        // Check for special characters (only allow letters, numbers, spaces, hyphens)
+        if (!/^[a-zA-Z0-9\s\-&]+$/.test(name)) {
+            showValidationMessage(this, 'Only letters, numbers, spaces, hyphens and & allowed', 'error');
+            return;
+        }       
+        // Wait for user to stop typing, then check duplicates
+        typingTimer = setTimeout(() => {
+            checkDuplicateCategoryName(name, this);
+        }, doneTypingInterval);
+    });
+}
+
+// Check duplicate category name
+async function checkDuplicateCategoryName(name, inputElement) {
+    const categoryId = document.getElementById('categoryId').value;
+    try {
+        // Get all existing categories from the page
+        const existingCategories = [];
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const categoryName = row.querySelector('td:first-child .text-sm')?.textContent?.trim();
+            const rowId = row.querySelector('[onclick*="editCategory"]')?.getAttribute('onclick')?.match(/\d+/)?.[0];
+            
+            // Exclude current category if editing
+            if (categoryName && (!categoryId || rowId !== categoryId)) {
+                existingCategories.push(categoryName.toLowerCase());
+            }
+        });
+        // Check for duplicate
+        if (existingCategories.includes(name.toLowerCase())) {
+            showValidationMessage(inputElement, '⚠️ A category with this name already exists', 'warning');
+        } else {
+            showValidationMessage(inputElement, '✓ Category name is available', 'success');
+        }
+    } catch (error) {
+        console.error('Error checking duplicate:', error);
+    }
+}
+// Show validation message
+function showValidationMessage(inputElement, message, type) {
+    // Remove existing message
+    clearValidationMessage(inputElement);
+    
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'validation-message text-xs mt-1 font-medium';
+    
+    // Color coding
+    if (type === 'error') {
+        messageDiv.classList.add('text-red-600');
+        inputElement.classList.add('border-red-500');
+        inputElement.classList.remove('border-gray-300', 'border-green-500', 'border-yellow-500');
+    } else if (type === 'warning') {
+        messageDiv.classList.add('text-yellow-600');
+        inputElement.classList.add('border-yellow-500');
+        inputElement.classList.remove('border-gray-300', 'border-red-500', 'border-green-500');
+    } else if (type === 'success') {
+        messageDiv.classList.add('text-green-600');
+        inputElement.classList.add('border-green-500');
+        inputElement.classList.remove('border-gray-300', 'border-red-500', 'border-yellow-500');
+    }
+    
+    messageDiv.textContent = message;
+    inputElement.parentNode.appendChild(messageDiv);
+}
+
+function clearValidationMessage(inputElement) {
+    const existingMessage = inputElement.parentNode.querySelector('.validation-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    inputElement.classList.remove('border-red-500', 'border-yellow-500', 'border-green-500');
+    inputElement.classList.add('border-gray-300');
+}
+
 // Show Create Modal
 function showCreateCategoryModal() {
     document.getElementById('categoryId').value = '';

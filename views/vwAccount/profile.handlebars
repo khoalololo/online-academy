@@ -417,6 +417,169 @@ document.querySelector('form[action="/account/change-password"]').addEventListen
         });
     }
 });
+
+// Email format validation
+const emailInput = document.getElementById('email');
+if (emailInput) {
+    emailInput.addEventListener('blur', function() {
+        const email = this.value.trim();
+        if (!validateEmail(email)) {
+            showFieldError(this, 'Please enter a valid email address');
+        } else {
+            clearFieldError(this);
+        }
+    });
+}
+
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// Date of Birth validation
+const dobInput = document.getElementById('dob');
+if (dobInput) {
+    dobInput.addEventListener('change', function() {
+        const dob = new Date(this.value);
+        const age = calculateAge(dob);
+        
+        if (age < 18) {
+            showFieldError(this, 'You must be at least 18 years old');
+            this.value = ''; // Clear invalid date
+        } else if (age > 120) {
+            showFieldError(this, 'Please enter a valid date of birth');
+            this.value = '';
+        } else {
+            clearFieldError(this);
+        }
+    });
+}
+
+function calculateAge(birthDate) {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    
+    return age;
+}
+
+//Bio field character count
+const bioTextarea = document.getElementById('bio');
+if (bioTextarea) {
+    const maxLength = 1000;
+    
+    // Create character counter element
+    const counterDiv = document.createElement('div');
+    counterDiv.className = 'text-xs text-gray-500 mt-1 flex justify-between';
+    counterDiv.innerHTML = `
+        <span id="bioCharCount" class="font-medium">0 / ${maxLength} characters</span>
+        <span id="bioWarning" class="text-yellow-600 font-semibold hidden">⚠️ Character limit approaching</span>
+    `;
+    
+    // Insert counter after textarea
+    bioTextarea.parentNode.appendChild(counterDiv);
+    
+    // Update counter on input
+    bioTextarea.addEventListener('input', function() {
+        const currentLength = this.value.length;
+        const remaining = maxLength - currentLength;
+        
+        const charCount = document.getElementById('bioCharCount');
+        const warning = document.getElementById('bioWarning');
+        
+        charCount.textContent = `${currentLength} / ${maxLength} characters`;
+        
+        // Color coding
+        if (remaining < 0) {
+            charCount.className = 'font-medium text-red-600';
+            warning.textContent = '❌ Character limit exceeded!';
+            warning.classList.remove('hidden');
+        } else if (remaining < 100) {
+            charCount.className = 'font-medium text-yellow-600';
+            warning.textContent = '⚠️ Character limit approaching';
+            warning.classList.remove('hidden');
+        } else {
+            charCount.className = 'font-medium text-gray-600';
+            warning.classList.add('hidden');
+        }
+    });
+    
+    // Trigger initial count
+    bioTextarea.dispatchEvent(new Event('input'));
+}
+
+// Profile form validation when submitting
+document.querySelector('form[action="/account/profile"]').addEventListener('submit', function(e) {
+    let isValid = true;
+    
+    // Validate email
+    const email = emailInput.value.trim();
+    if (!validateEmail(email)) {
+        e.preventDefault();
+        showFieldError(emailInput, 'Please enter a valid email address');
+        isValid = false;
+    }
+    
+    // Validate DOB
+    if (dobInput.value) {
+        const age = calculateAge(new Date(dobInput.value));
+        if (age < 18 || age > 120) {
+            e.preventDefault();
+            showFieldError(dobInput, 'Please enter a valid date of birth (18+ years old)');
+            isValid = false;
+        }
+    }
+    
+    // Validate bio length
+    if (bioTextarea.value.length > 1000) {
+        e.preventDefault();
+        showFieldError(bioTextarea, 'Biography must not exceed 1000 characters');
+        isValid = false;
+    }
+    
+    if (!isValid) {
+        Swal.fire({
+            title: 'Validation Error',
+            text: 'Please fix the errors in the form',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+    }
+});
+// Helpers to show and clear field errors
+function showFieldError(field, message) {
+    // Remove existing error
+    clearFieldError(field);
+    
+    // Add error styling
+    field.classList.add('border-red-500', 'focus:ring-red-500');
+    field.classList.remove('border-gray-300', 'focus:ring-indigo-500');
+    
+    // Create error message
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error text-red-600 text-xs mt-1 font-medium';
+    errorDiv.textContent = message;
+    
+    // Insert error message
+    field.parentNode.appendChild(errorDiv);
+}
+
+function clearFieldError(field) {
+    // Remove error styling
+    field.classList.remove('border-red-500', 'focus:ring-red-500');
+    field.classList.add('border-gray-300', 'focus:ring-indigo-500');
+    
+    // Remove error message
+    const existingError = field.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+}
+
 // Preview and upload avatar
 document.getElementById('avatarInput').addEventListener('change', async function(e) {
     const file = e.target.files[0];

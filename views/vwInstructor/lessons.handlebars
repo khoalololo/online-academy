@@ -71,10 +71,10 @@
         <div id="lessonsList" class="divide-y divide-gray-200">
           {{#if lessons.length}}
             {{#each lessons}}
-            <div class="p-6 hover:bg-gray-50 transition-colors flex items-start justify-between group" data-lesson-id="{{this.id}}">
+            <div class="lesson-item p-6 hover:bg-gray-50 transition-colors flex items-start justify-between group" data-lesson-id="{{this.id}}">
               <div class="flex items-start space-x-4 flex-1">
                 <!-- Drag Handle -->
-                <div class="cursor-move text-gray-400 hover:text-gray-600 mt-1">
+                <div class="cursor-move text-gray-400 hover:text-gray-600 mt-1 drag-handle" title="Drag to reorder">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
                   </svg>
@@ -331,6 +331,118 @@
 
 {{#section 'js'}}
 <script>
+
+// Form validation
+function validateLessonForm() {
+    const title = document.getElementById('lessonTitle').value.trim();
+    const duration = parseFloat(document.getElementById('lessonDuration').value);
+    
+    if (title.length < 5) {
+        showError('Lesson title must be at least 5 characters');
+        return false;
+    }
+    
+    if (duration && duration < 0) {
+        showError('Duration must be a positive number');
+        return false;
+    }
+    
+    return true;
+}
+
+// Drag-and-drop reordering
+const list = document.getElementById("lessonsList");
+let dragSrc = null;
+
+list.querySelectorAll(".lesson-item").forEach(item => {
+    const handle = item.querySelector(".drag-handle");
+
+    // Enable drag only on handle
+    handle.addEventListener("mousedown", () => {
+        item.setAttribute("draggable", "true");
+    });
+    item.addEventListener("dragend", () => {
+        item.removeAttribute("draggable");
+    });
+
+    item.addEventListener("dragstart", (e) => {
+        dragSrc = item;
+        item.classList.add("opacity-50");
+        e.dataTransfer.effectAllowed = "move";
+    });
+
+    item.addEventListener("dragend", () => {
+        item.classList.remove("opacity-50");
+    });
+
+    item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+    });
+
+    item.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        if (dragSrc !== item) {
+            const items = [...list.children];
+            const srcIndex = items.indexOf(dragSrc);
+            const destIndex = items.indexOf(item);
+
+            if (srcIndex < destIndex) {
+                item.after(dragSrc);
+            } else {
+                item.before(dragSrc);
+            }
+
+            await saveNewOrder();
+        }
+    });
+});
+
+async function saveNewOrder() {
+    const orders = [...document.querySelectorAll(".lesson-item")].map((el, i) => ({
+        id: parseInt(el.dataset.lessonId),
+        order_index: i
+    }));
+
+    await fetch(`/instructor/lessons/{{course.proid}}/reorder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lessonOrders: orders })
+    });
+
+    Swal.fire({
+        title: "Saved!",
+        text: "Lesson order updated",
+        icon: "success",
+        timer: 800,
+        showConfirmButton: false
+    });
+}
+
+
+async function saveNewOrder() {
+    const lessons = Array.from(document.querySelectorAll('.lesson-item'));
+    const lessonOrders = lessons.map((item, index) => ({
+        id: parseInt(item.dataset.lessonId),
+        order_index: index
+    }));
+    
+    const response = await fetch('/instructor/lessons/{{course.proid}}/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonOrders })
+    });
+    
+    if (response.ok) {
+        Swal.fire({
+            title: 'Success!',
+            text: 'Lesson order updated',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }
+}
+
 // Show Add Lesson Modal
 function showAddLessonModal() {
   document.getElementById('lessonId').value = '';
@@ -457,7 +569,7 @@ async function editLesson(id) {
         fileInfoDiv.className = 'file-info mt-2 p-2 bg-green-50 rounded text-sm text-green-700';
         uploadSection.appendChild(fileInfoDiv);
       }
-      fileInfoDiv.innerHTML = `✓ Current video: <strong>${filename}</strong><br><small class="text-xs">Upload a new file to replace it</small>`;
+      fileInfoDiv.innerHTML = `Current video: <strong>${filename}</strong><br><small class="text-xs">Upload a new file to replace it</small>`;
     } else {
       // It's a URL (YouTube/Vimeo)
       document.getElementById('videoSourceType').value = 'url';

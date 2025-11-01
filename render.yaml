@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: online-academy
+    env: node
+    plan: free 
+    buildCommand: "npm install"
+    startCommand: "node main.js"
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # A PostgreSQL database
+  - type: pserv
+    name: online-academy-db
+    databaseName: postgres
+    user: postgres
+    plan: free

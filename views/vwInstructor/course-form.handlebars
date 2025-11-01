@@ -240,6 +240,30 @@ tinymce.init({
     }
 });
 
+// Form Validation
+function validateCourseForm() {
+    const title = document.getElementById('proname').value.trim();
+    const category = document.getElementById('catid').value;
+    const description = tinymce.get('fulldes').getContent();
+    
+    if (title.length < 10) {
+        showError('Course title must be at least 10 characters');
+        return false;
+    }
+    
+    if (!category) {
+        showError('Please select a category');
+        return false;
+    }
+    
+    if (description.length < 50) {
+        showError('Course description must be at least 50 characters');
+        return false;
+    }
+    
+    return true;
+}
+
 // Price Preview
 const priceInput = document.getElementById('price');
 const promoInput = document.getElementById('promo_price');
@@ -276,7 +300,6 @@ document.getElementById('courseForm').addEventListener('submit', e => {
 });
 
 {{#if isEdit}}
-// Thumbnail upload (immediate upload on file select)
 async function uploadThumbnailNow(input) {
     if (!input.files || !input.files[0]) return;
 
@@ -294,14 +317,12 @@ async function uploadThumbnailNow(input) {
         return;
     }
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onload = function(e) {
         document.getElementById('thumbnailPreview').src = e.target.result;
     };
     reader.readAsDataURL(file);
 
-    // Upload to server
     const formData = new FormData();
     formData.append('thumbnail', file);
     formData.append('courseId', '{{course.proid}}');
@@ -335,7 +356,6 @@ async function uploadThumbnailNow(input) {
             icon: 'error',
             confirmButtonColor: '#4F46E5'
         });
-        // Reset to original image
         document.getElementById('thumbnailPreview').src = 
             '{{#if course.thumbnail}}{{course.thumbnail}}{{else}}/static/images/default-course.png{{/if}}';
         input.value = '';
@@ -403,7 +423,6 @@ document.getElementById('courseForm').addEventListener('submit', function(e) {
         return false;
     }
     
-    // Let the form submit normally
     return true;
 });
 </script>

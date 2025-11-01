@@ -107,5 +107,16 @@
                 });
             });
     }
+
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+
+    function validateAge(dob) {
+        const birthDate = new Date(dob);
+        const age = (Date.now() - birthDate) / (365.25 * 24 * 60 * 60 * 1000);
+        return age >= 18;
+    }
 </script>
 {{/section}}

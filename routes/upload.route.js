@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Create uploads directory if it doesn't exist
 const uploadDir = 'static/uploads';
-['avatars', 'courses', 'instructors'].forEach(folder => {
+['avatars', 'courses'].forEach(folder => {
   const dir = path.join(uploadDir, folder);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
