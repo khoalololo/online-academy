@@ -23,9 +23,25 @@ const app = express();
 app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true, limit: '990mb' })); 
 app.use(express.json({ limit: '110mb' }));
-app.use('/static', express.static('static'));
+app.use('/static', express.static('static', {
+  maxAge: '1d', // Cache static files for 1 day
+  setHeaders: (res, path) => {
+    // Set proper MIME types for video files
+    if (path.endsWith('.mp4')) {
+      res.setHeader('Content-Type', 'video/mp4');
+    } else if (path.endsWith('.webm')) {
+      res.setHeader('Content-Type', 'video/webm');
+    } else if (path.endsWith('.ogg')) {
+      res.setHeader('Content-Type', 'video/ogg');
+    } else if (path.endsWith('.mov')) {
+      res.setHeader('Content-Type', 'video/quicktime');
+    }
+    // Enable range requests for video streaming
+    res.setHeader('Accept-Ranges', 'bytes');
+  }
+}));
 app.use(session({
-  secret: 'your-secret-key', 
+  secret: 'your-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false } 

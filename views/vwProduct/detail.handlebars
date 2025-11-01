@@ -846,6 +846,9 @@ function closePreview() {
     document.getElementById('previewVideoContainer').innerHTML = '';
 }
 
+
+// Replace the initializePreviewPlayer function in detail.handlebars
+
 function initializePreviewPlayer(videoUrl) {
     // Destroy existing player
     if (previewPlayer) {
@@ -858,48 +861,80 @@ function initializePreviewPlayer(videoUrl) {
         return;
     }
 
-    // Parse video URL
-    const { provider, videoId } = parseVideoUrl(videoUrl);
-    
-    if (!provider || !videoId) {
-        console.error('Invalid video URL:', videoUrl);
-        document.getElementById('previewVideoContainer').innerHTML = 
-            '<div class="flex items-center justify-center h-full text-white"><p>Invalid video URL</p></div>';
-        return;
-    }
-
-    // Create player container
-    const container = document.getElementById('previewVideoContainer');
-    container.innerHTML = `<div id="previewPlyrPlayer" data-plyr-provider="${provider}" data-plyr-embed-id="${videoId}"></div>`;
-
-    // Initialize Plyr (need to load Plyr library first)
-    if (typeof Plyr !== 'undefined') {
-        previewPlayer = new Plyr('#previewPlyrPlayer', {
-            controls: [
-                'play-large',
-                'play',
-                'progress',
-                'current-time',
-                'duration',
-                'mute',
-                'volume',
-                'settings',
-                'fullscreen'
-            ],
-            settings: ['quality', 'speed'],
-            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-            youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
-        });
-    } else {
-        // Fallback to iframe if Plyr not loaded
+    // Check if it's a local uploaded video
+    if (videoUrl.startsWith('/static/uploads/videos/')) {
+        // For local uploaded videos, use HTML5 video
+        const container = document.getElementById('previewVideoContainer');
         container.innerHTML = `
-            <iframe 
-                class="w-full h-full"
-                src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-            </iframe>`;
+            <video id="previewPlyrPlayer" controls playsinline>
+                <source src="${videoUrl}" type="video/mp4">
+                <source src="${videoUrl}" type="video/webm">
+                <source src="${videoUrl}" type="video/ogg">
+                Your browser does not support the video tag.
+            </video>`;
+
+        // Initialize Plyr for HTML5 video
+        if (typeof Plyr !== 'undefined') {
+            previewPlayer = new Plyr('#previewPlyrPlayer', {
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'duration',
+                    'mute',
+                    'volume',
+                    'settings',
+                    'fullscreen'
+                ],
+                settings: ['quality', 'speed'],
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+            });
+        }
+    } else {
+        // Parse video URL for YouTube/Vimeo
+        const { provider, videoId } = parseVideoUrl(videoUrl);
+        
+        if (!provider || !videoId) {
+            console.error('Invalid video URL:', videoUrl);
+            document.getElementById('previewVideoContainer').innerHTML = 
+                '<div class="flex items-center justify-center h-full text-white"><p>Invalid video URL</p></div>';
+            return;
+        }
+
+        // Create player container for YouTube/Vimeo
+        const container = document.getElementById('previewVideoContainer');
+        container.innerHTML = `<div id="previewPlyrPlayer" data-plyr-provider="${provider}" data-plyr-embed-id="${videoId}"></div>`;
+
+        // Initialize Plyr
+        if (typeof Plyr !== 'undefined') {
+            previewPlayer = new Plyr('#previewPlyrPlayer', {
+                controls: [
+                    'play-large',
+                    'play',
+                    'progress',
+                    'current-time',
+                    'duration',
+                    'mute',
+                    'volume',
+                    'settings',
+                    'fullscreen'
+                ],
+                settings: ['quality', 'speed'],
+                speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+                youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
+            });
+        } else {
+            // Fallback to iframe if Plyr not loaded
+            container.innerHTML = `
+                <iframe 
+                    class="w-full h-full"
+                    src="https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>`;
+        }
     }
 }
 

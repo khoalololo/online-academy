@@ -540,6 +540,13 @@ router.post('/lessons/:proid/upload-video', authMdw.isInstructor, videoUpload.si
     // Verify course ownership
     const course = await courseModel.findById(proid);
     if (!course || course.instructor_id !== instructorId) {
+      // Delete uploaded file if access denied
+      if (req.file) {
+        const filePath = path.join(process.cwd(), 'static/uploads/videos', req.file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
       return res.status(403).json({ 
         success: false, 
         message: 'Access denied' 
@@ -550,7 +557,10 @@ router.post('/lessons/:proid/upload-video', authMdw.isInstructor, videoUpload.si
       return res.status(400).json({ success: false, message: 'No video file uploaded' });
     }
 
+    // Return absolute path with leading slash
     const videoPath = `/static/uploads/videos/${req.file.filename}`;
+    
+    console.log('Video uploaded successfully:', videoPath);
     
     res.json({ 
       success: true, 
@@ -559,6 +569,15 @@ router.post('/lessons/:proid/upload-video', authMdw.isInstructor, videoUpload.si
     });
   } catch (error) {
     console.error('Video upload error:', error);
+    
+    // Clean up uploaded file on error
+    if (req.file) {
+      const filePath = path.join(process.cwd(), 'static/uploads/videos', req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    
     res.status(500).json({ success: false, message: error.message });
   }
 });

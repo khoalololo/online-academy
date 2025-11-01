@@ -197,37 +197,69 @@ function initializePlayer(videoUrl) {
 
     if (!videoUrl) return;
 
-    // Extract video ID and provider
-    const { provider, videoId } = parseVideoUrl(videoUrl);
-    
-    if (!provider || !videoId) {
-        console.error('Invalid video URL:', videoUrl);
-        return;
+    // Check if it's a local uploaded video
+    if (videoUrl.startsWith('/static/uploads/videos/')) {
+        // For local uploaded videos, use HTML5 video
+        const container = document.getElementById('videoContainer');
+        container.innerHTML = `
+            <video id="plyrPlayer" controls playsinline class="w-full h-full">
+                <source src="${videoUrl}" type="video/mp4">
+                <source src="${videoUrl}" type="video/webm">
+                <source src="${videoUrl}" type="video/ogg">
+                Your browser does not support the video tag.
+            </video>`;
+
+        // Initialize Plyr for HTML5 video
+        player = new Plyr('#plyrPlayer', {
+            controls: [
+                'play-large',
+                'play',
+                'progress',
+                'current-time',
+                'duration',
+                'mute',
+                'volume',
+                'settings',
+                'pip',
+                'fullscreen'
+            ],
+            settings: ['quality', 'speed'],
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            quality: { default: 720, options: [1080, 720, 576, 480, 360, 240] }
+        });
+    } else {
+        // Extract video ID and provider for YouTube/Vimeo
+        const { provider, videoId } = parseVideoUrl(videoUrl);
+        
+        if (!provider || !videoId) {
+            console.error('Invalid video URL:', videoUrl);
+            return;
+        }
+
+        // Create player container for YouTube/Vimeo
+        const container = document.getElementById('videoContainer');
+        container.innerHTML = `<div id="plyrPlayer" data-plyr-provider="${provider}" data-plyr-embed-id="${videoId}"></div>`;
+
+        // Initialize Plyr
+        player = new Plyr('#plyrPlayer', {
+            controls: [
+                'play-large',
+                'play',
+                'progress',
+                'current-time',
+                'duration',
+                'mute',
+                'volume',
+                'settings',
+                'pip',
+                'fullscreen'
+            ],
+            settings: ['quality', 'speed'],
+            speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+            quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
+            youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
+        });
     }
-
-    // Create player container
-    const container = document.getElementById('videoContainer');
-    container.innerHTML = `<div id="plyrPlayer" data-plyr-provider="${provider}" data-plyr-embed-id="${videoId}"></div>`;
-
-    // Initialize Plyr
-    player = new Plyr('#plyrPlayer', {
-        controls: [
-            'play-large',
-            'play',
-            'progress',
-            'current-time',
-            'duration',
-            'mute',
-            'volume',
-            'settings',
-            'pip',
-            'fullscreen'
-        ],
-        settings: ['quality', 'speed'],
-        speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-        quality: { default: 720, options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] },
-        youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
-    });
 
     // Track watch progress (optional)
     player.on('timeupdate', () => {
@@ -265,7 +297,7 @@ function parseVideoUrl(url) {
         return { provider: 'html5', videoId: url };
     }
 
-    // YouTube patterns (existing code)
+    // YouTube patterns 
     const youtubePatterns = [
         /(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
         /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/
@@ -278,7 +310,7 @@ function parseVideoUrl(url) {
         }
     }
 
-    // Vimeo patterns (existing code)
+    // Vimeo patterns 
     const vimeoPattern = /(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/;
     const vimeoMatch = url.match(vimeoPattern);
     if (vimeoMatch) {
