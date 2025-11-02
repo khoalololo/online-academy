@@ -123,9 +123,13 @@ app.engine('handlebars', engine({
       return str.substring(start, end).toUpperCase();
     },
     percentage(original, promo) {
+      original = Number(original);
+      promo = Number(promo);
+
       if (!promo || promo >= original) return 0;
       return Math.round(((original - promo) / original) * 100);
     },
+
     buildQueryString: (params, newKey, newValue) => {
       const query = new URLSearchParams(params);
       query.set(newKey, newValue);
