@@ -38,7 +38,7 @@ A comprehensive online learning platform built with Node.js, Express, Handlebars
 * **Instructors**:
 
   * Create and edit courses with rich text descriptions (TinyMCE)
-  * Upload course thumbnails
+  * Upload course thumbnails and lessons
   * Add/edit/delete lessons with video URLs
   * Reorder lessons via drag-and-drop
   * Mark courses as complete/incomplete
@@ -46,7 +46,7 @@ A comprehensive online learning platform built with Node.js, Express, Handlebars
 * **Admins**:
 
   * Enable/disable courses
-  * Delete courses (with cascade handling)
+  * Delete courses 
   * Create instructor accounts directly
   * Manage all users and permissions
 
@@ -188,6 +188,47 @@ npm start     # Production mode
 
 App runs on `http://localhost:3000`.
 
+### 4. Database Setup
+
+#### Option A: Use Supabase (Recommended)
+
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Get your connection details from Project Settings > Database
+4. Update `ultis/db.js` with your credentials:
+   
+
+```js
+const db = knex({
+  client: 'pg',
+  connection: {
+    host: 'your-project.supabase.co',
+    port: 5432,
+    user: 'postgres',
+    password: 'your-password',
+    database: 'postgres'
+  }
+});
+```
+#### Option B: Local PostgreSQL
+
+1. Install PostgreSQL locally
+2. Create a new database
+3. Update connection details in `ultis/db.js`
+
+### 4. Import Database Schema
+
+Use the provided `DB_SCHEMA.md` to create tables.
+
+```sql
+-- See DB_SCHEMA.md for full schema
+```
+
+### 5. Generate Admin Password Hash
+
+```bash
+node _generateHash.js
+```
 ---
 
 ## Demo Accounts
