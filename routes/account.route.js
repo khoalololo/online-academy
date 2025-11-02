@@ -70,7 +70,7 @@ router.get('/signup', (req, res) => {
 // [POST] /account/signup
 router.post('/signup', async (req, res) => {
   try {
-    const { username, email, password, confirmPassword, name } = req.body;
+    const { username, email, password, confirmPassword, name, dob } = req.body;
     if (password !== confirmPassword)
       return res.render('vwAccount/signup', { error_message: 'Passwords do not match.' });
     if (await userModel.emailExists(email))
@@ -80,16 +80,6 @@ router.post('/signup', async (req, res) => {
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    const newUser = await userModel.create({
-      username,
-      email,
-      name,
-      password,
-      is_verified: false,
-      otp_code: otpCode,
-      otp_expires_at: otpExpiresAt,
-    });
 
     await sendMail({
       to: email,
@@ -102,17 +92,28 @@ router.post('/signup', async (req, res) => {
       `,
     });
 
-    req.session.tempUserId = newUser.id;
+    req.session.pendingSignup = { 
+      username,
+      email,
+      name,
+      password,
+      dob,
+      otpCode,
+      otpExpiresAt: otpExpiresAt.toISOString()
+    };
+
     res.redirect('/account/verify-otp');
   } catch (error) {
-    console.error(error);
-    res.render('vwAccount/signup', { error_message: 'An error occurred during registration.' });
+    console.error('Signup error:', error);
+    res.render('vwAccount/signup', { error_message: 'Failed to send verification code. Please try again.',
+      formData: req.body
+     });
   }
 });
 
 
 router.get("/verify-otp", (req, res) => {
-  if (!req.session.tempUserId) {
+  if (!req.session.pendingSignup) {
     return res.redirect("/account/signup");
   }
   res.render("vwAccount/verify-otp");
@@ -121,24 +122,30 @@ router.get("/verify-otp", (req, res) => {
 router.post("/verify-otp", async (req, res) => {
   const { otp } = req.body;
   try {
-    const tempUserId = req.session.tempUserId;
-    if (!tempUserId) {
+    const pendingSignup = req.session.pendingSignup;
+    if (!pendingSignup) {
       return res.redirect("/account/signup");
     }
-    const user = await userModel.findById(tempUserId);
-    if (!user) {
-      return res.render("vwAccount/verify-otp", { error_message: "User not found." });
+    if (pendingSignup.otpCode !== otp) {
+      return res.render("vwAccount/verify-otp", { error_message: "Invalid OTP code. Please try again." });
     }
-    if (user.otp_code !== otp) {
-      return res.render("vwAccount/verify-otp", { error_message: "Invalid OTP code." });
-    }
-    if (new Date() > new Date(user.otp_expires_at)) {
-      return res.render("vwAccount/verify-otp", { error_message: "OTP code has expired." });
+    if (new Date() > new Date(pendingSignup.otpExpiresAt)) {
+      return res.render("vwAccount/verify-otp", { error_message: "OTP code has expired. Please sign up again." });
     }
 
-    await userModel.verifyUser(user.id);
+    await userModel.create({
+      username: pendingSignup.username,
+      password: pendingSignup.password,
+      name: pendingSignup.name,
+      email: pendingSignup.email,
+      dob: pendingSignup.dob,
+      is_verified: true,
+      otp_code: null,
+      otp_expires_at: null
+    });
 
-    delete req.session.tempUserId; 
+
+    delete req.session.pendingSignup;
     res.render("vwAccount/signin", { success_message: "Account verified! Please sign in." });
   } catch (error) {
     console.error(error);
