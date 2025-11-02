@@ -1,24 +1,26 @@
 import nodemailer from 'nodemailer';
 
-// Gmail SMTP Configuration
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp-relay.brevo.com',
+  port: 587,
   auth: {
-    user: '	bbba77903@gmail.com',
-    pass: 'your-app-password'
+    user: '9a8f55001@smtp-brevo.com',  
+    pass: 'Cn2bspxzBqTvkjEa'      
   }
 });
 
 export async function sendMail({ to, subject, html }) {
   try {
     const info = await transporter.sendMail({
-        from: '"Online Academy" <bbba77903@gmail.com>',
-        to,
+      from: '"Online Academy 🎓" <minhkhoa278kd@gmail.com>',  
+      to,
       subject,
       html
     });
+    console.log('Email sent via Brevo:', info.messageId);
     return info;
   } catch (error) {
+    console.error('Email error:', error);
     throw error;
   }
 }
