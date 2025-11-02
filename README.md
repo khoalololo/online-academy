@@ -20,7 +20,7 @@ A comprehensive online learning platform built with Node.js, Express, Handlebars
 
 ### Authentication & Authorization
 
-* User registration with OTP email verification (Ethereal Email)
+* User registration with OTP email verification 
 * Secure login with bcrypt password hashing
 * Role-based access control (Student, Instructor, Admin)
 * Profile management with avatar upload
@@ -168,7 +168,7 @@ online-academy/
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/khoalololo/online-academy
 cd online-academy
 ```
 
@@ -178,54 +178,8 @@ cd online-academy
 npm install
 ```
 
-### 3. Database Setup
 
-#### Option A: Use Supabase (Recommended)
-
-1. Create a free account at [supabase.com](https://supabase.com)
-2. Create a new project
-3. Get your connection details from Project Settings > Database
-4. Update `ultis/db.js` with your credentials:
-
-```js
-const db = knex({
-  client: 'pg',
-  connection: {
-    host: 'your-project.supabase.co',
-    port: 5432,
-    user: 'postgres',
-    password: 'your-password',
-    database: 'postgres'
-  }
-});
-```
-
-#### Option B: Local PostgreSQL
-
-1. Install PostgreSQL locally
-2. Create a new database
-3. Update connection details in `ultis/db.js`
-
-### 4. Import Database Schema
-
-Use the provided `DB_SCHEMA.md` to create tables.
-
-```sql
--- See DB_SCHEMA.md for full schema
-```
-
-### 5. Generate Admin Password Hash
-
-```bash
-node _generateHash.js
-```
-
-### 6. Email Configuration
-
-The project uses Ethereal Email for development. Credentials are shown in the console when sending emails.
-For production, update `emailService.js` with real SMTP credentials.
-
-### 7. Run the Application
+### 3. Run the Application
 
 ```bash
 npm run dev   # Development mode
@@ -289,13 +243,13 @@ See `DB_SCHEMA.md` for complete schema details.
 * Enroll and track progress
 * Watch course videos
 * Add to watchlist
-* Write and edit reviews
+* Write reviews
 * View progress dashboard
 
 ### Instructor
 
 * Create and manage courses
-* Upload thumbnails
+* Upload thumbnails and lessons
 * Manage lessons
 * Reorder lessons
 * View statistics
@@ -322,8 +276,6 @@ See `DB_SCHEMA.md` for complete schema details.
 * OTP verification
 * Session-based authentication
 * Role-based authorization middleware
-* SQL injection protection via Knex
-* XSS protection with Handlebars
 * File validation for uploads
 
 ---
