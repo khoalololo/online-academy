@@ -116,26 +116,12 @@ A comprehensive online learning platform built with Node.js, Express, Handlebars
 
 ```
 online-academy/
-├── models/
-│   ├── admin.model.js
-│   ├── category.model.js
-│   ├── course.model.js
-│   ├── enrollment.model.js
-│   ├── lesson.model.js
-│   ├── lesson-progress.model.js
-│   ├── review.model.js
-│   ├── user.model.js
-│   └── watchlist.model.js
-├── routes/
-│   ├── account.route.js
-│   ├── admin.route.js
-│   ├── instructor.route.js
-│   ├── product.route.js
-│   ├── student.route.js
-│   └── upload.route.js
-├── middlewares/
-│   └── auth.mdw.js
-├── views/
+├── controllers/          # Request handling and HTTP responses
+├── services/             # Core business logic and layer orchestration
+├── repositories/         # Database access and raw SQL queries
+├── routes/               # Express route definitions
+├── middlewares/          # Custom Express middlewares (auth, validation)
+├── views/                # Handlebars templates
 │   ├── layouts/
 │   ├── partials/
 │   ├── vwAccount/

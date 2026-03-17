@@ -5,8 +5,9 @@ import path from 'path';
 import sections from 'express-handlebars-sections'; 
 import moment from 'moment';
 // --- Model Imports ---
-import categoryModel from './models/category.model.js';
-import courseModel from './models/course.model.js';
+import categoryModel from './repositories/category.repository.js';
+import courseModel from './repositories/course.repository.js';
+import { GlobalErrorHandler, NotFoundHandler } from './middlewares/error.mdw.js';
 
 // --- Route Imports ---
 import accountRouter from './routes/account.route.js';
@@ -255,14 +256,8 @@ app.get('/', async function(req, res) {
   }
 });
 
-app.use(function(req, res) {
-  res.status(404).render('error', { layout: false, error: { status: 404, message: 'Not Found' } });
-});
-
-app.use(function(err, req, res, next) {
-  console.error(err.stack);
-  res.status(500).render('error', { layout: false, error: { status: 500, message: 'Internal Server Error' } });
-});
+app.use(NotFoundHandler);
+app.use(GlobalErrorHandler);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function() {

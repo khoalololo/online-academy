@@ -1,4 +1,4 @@
-import userModel from "../models/user.model.js";
+import userModel from "../repositories/user.repository.js";
 
 export const PERMISSIONS ={
     GUEST: 0,

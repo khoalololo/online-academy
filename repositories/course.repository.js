@@ -1,0 +1,556 @@
+import db from '../ultis/db.js';
+
+const _getRatingSubquery = () => {
+  return db('reviews')
+    .select('proid')
+    .avg('rating as average_rating')
+    .count('id as rating_count')
+    .groupBy('proid')
+    .as('ratings');
+};
+
+const _getEnrollmentSubquery = () => {
+  return db('enrollment')
+    .select('proid')
+    .count('user_id as enrollment_count')
+    .groupBy('proid')
+    .as('enrollments');
+};
+
+const _getBaseQuery = () => {
+  return db('courses as c')
+    .join('categories as cat', 'c.catid', 'cat.id')
+    .join('users as u', 'c.instructor_id', 'u.id')
+    .leftJoin(_getRatingSubquery(), 'c.proid', 'ratings.proid')
+    .leftJoin(_getEnrollmentSubquery(), 'c.proid', 'enrollments.proid')
+    .select(
+      'c.proid',
+      'c.proname',
+      'c.tinydes',
+      'c.price',
+      'c.promo_price',
+      'c.last_updated',
+      'c.thumbnail',
+      'c.is_disabled',
+      'c.is_completed',
+      'cat.name as category_name',
+      'u.name as instructor_name',
+      db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+      db.raw('COALESCE(ratings.rating_count, 0) as rating_count'),
+      db.raw('COALESCE(enrollments.enrollment_count, 0) as enrollment_count')
+    );
+};
+
+export const getBaseQuery = _getBaseQuery;
+
+export default {
+  async findTopViewed() {
+    const courses = await _getBaseQuery()
+      .where('c.is_disabled', false) // EXCLUDE DISABLED
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.views',
+        'cat.name as category_name',
+        'u.name as instructor_name',
+        'ratings.average_rating',
+        'ratings.rating_count'
+      )
+      .orderBy('c.views', 'desc')
+      .limit(10);
+
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
+    return courses;
+  },
+
+  async findTopNewest() {
+    const courses = await _getBaseQuery()
+      .where('c.is_disabled', false) // EXCLUDE DISABLED
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.views',
+        'cat.name as category_name',
+        'u.name as instructor_name',
+        'ratings.average_rating',
+        'ratings.rating_count'
+      )
+      .orderBy('c.last_updated', 'desc')
+      .limit(10);
+
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
+    return courses;
+  },
+
+  async findById(proid) {
+    return await db('courses as c')
+      .join('categories as cat', 'c.catid', 'cat.id')
+      .join('users as instructor', 'c.instructor_id', 'instructor.id')
+      .leftJoin('categories as parent_cat', 'cat.parent_id', 'parent_cat.id')
+      .where('c.proid', proid)
+      .select(
+        'c.*',
+        'cat.name as category_name',
+        'cat.id as catid',
+        'parent_cat.name as parent_category_name',
+        'instructor.name as instructor_name',
+        'instructor.email as instructor_email',
+        'instructor.bio as instructor_bio',
+        'instructor.avatar as instructor_avatar'
+      )
+      .first();
+  },
+
+  async findAll(page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const courses = await _getBaseQuery()
+      .where('c.is_disabled', false) // EXCLUDE DISABLED
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.thumbnail',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.views',
+        'cat.name as category_name',
+        'u.name as instructor_name',
+        'c.is_completed',
+        'ratings.average_rating',
+        'ratings.rating_count'
+      )
+      .orderBy('c.last_updated', 'desc')
+      .limit(limit)
+      .offset(offset);
+    const [{ count }] = await db('courses as c')
+      .where('c.is_disabled', false)
+      .count('proid as count');
+
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
+
+    return {
+      courses: courses,
+      pagination: {
+        page,
+        limit,
+        total: parseInt(count),
+        totalPages: Math.ceil(parseInt(count) / limit),
+      },
+    };
+  },
+
+  async findByCategory(catid, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const courses = await _getBaseQuery()
+      .where('c.is_disabled', false) // EXCLUDE DISABLED
+      .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.thumbnail',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.views',
+        'cat.name as category_name',
+        'u.name as instructor_name',
+        'c.is_completed',
+        'ratings.average_rating',
+        'ratings.rating_count'
+      )
+      .orderBy('c.last_updated', 'desc')
+      .limit(limit)
+      .offset(offset);
+    const [{ count }] = await db('courses as c')
+      .whereIn('c.catid', Array.isArray(catid) ? catid : [catid])
+      .where('c.is_disabled', false)
+      .count('proid as count');
+
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
+
+    return {
+      courses: courses,
+      pagination: {
+        page,
+        limit,
+        total: parseInt(count),
+        totalPages: Math.ceil(parseInt(count) / limit),
+      },
+    };
+  },
+
+  async incrementViews(proid) {
+    return await db('courses').where('proid', proid).increment('views', 1);
+  },
+
+  async search(query, catid = null, sortBy = 'relevance', page = 1, limit = 6) {
+    const offset = (page - 1) * limit;
+
+    const normalizedQuery = query ? query.toLowerCase().trim() : '';
+
+    let coursesQuery = db('courses as c')
+      .join('categories as cat', 'c.catid', 'cat.id')
+      .join('users as u', 'c.instructor_id', 'u.id')
+      .leftJoin(
+        db('reviews')
+          .select('proid')
+          .avg('rating as average_rating')
+          .count('id as rating_count')
+          .groupBy('proid')
+          .as('ratings'),
+        'c.proid',
+        'ratings.proid'
+      )
+      .leftJoin(
+        db('enrollment')
+          .select('proid')
+          .count('user_id as enrollment_count')
+          .groupBy('proid')
+          .as('enrollments'),
+        'c.proid',
+        'enrollments.proid'
+      )
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.last_updated',
+        'c.thumbnail',
+        'c.is_disabled',
+        'c.is_completed',
+        'cat.name as category_name',
+        'u.name as instructor_name',
+        db.raw('COALESCE(ratings.average_rating, 0) as average_rating'),
+        db.raw('COALESCE(ratings.rating_count, 0) as rating_count'),
+        db.raw('COALESCE(enrollments.enrollment_count, 0) as enrollment_count')
+      )
+      .where('c.is_disabled', false); // Exclude disabled courses
+
+    let countQuery = db('courses as c').where('c.is_disabled', false);
+
+    if (query && query.trim()) {
+      coursesQuery = coursesQuery.where(function () {
+        this.whereRaw(`unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?))`, [
+          `%${normalizedQuery}%`,
+        ])
+          .orWhereRaw(`unaccent(LOWER(c.tinydes)) LIKE unaccent(LOWER(?))`, [
+            `%${normalizedQuery}%`,
+          ])
+          .orWhereRaw(`unaccent(LOWER(c.fulldes)) LIKE unaccent(LOWER(?))`, [
+            `%${normalizedQuery}%`,
+          ])
+
+          .orWhereRaw(`c.fts @@ websearch_to_tsquery('vietnamese', ?)`, [query])
+
+          .orWhereRaw(`similarity(c.search_text_normalized, unaccent(LOWER(?))) > 0.3`, [
+            normalizedQuery,
+          ]);
+      });
+
+      countQuery = countQuery.where(function () {
+        this.whereRaw(`unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?))`, [
+          `%${normalizedQuery}%`,
+        ])
+          .orWhereRaw(`unaccent(LOWER(c.tinydes)) LIKE unaccent(LOWER(?))`, [
+            `%${normalizedQuery}%`,
+          ])
+          .orWhereRaw(`unaccent(LOWER(c.fulldes)) LIKE unaccent(LOWER(?))`, [
+            `%${normalizedQuery}%`,
+          ])
+          .orWhereRaw(`c.fts @@ websearch_to_tsquery('vietnamese', ?)`, [query])
+          .orWhereRaw(`similarity(c.search_text_normalized, unaccent(LOWER(?))) > 0.3`, [
+            normalizedQuery,
+          ]);
+      });
+
+      if (sortBy === 'relevance') {
+        coursesQuery = coursesQuery.select(
+          db.raw(
+            `
+                        CASE 
+                            WHEN unaccent(LOWER(c.proname)) LIKE unaccent(LOWER(?)) THEN 100
+                            WHEN c.fts @@ websearch_to_tsquery('vietnamese', ?) THEN 
+                                50 + (ts_rank(c.fts, websearch_to_tsquery('vietnamese', ?)) * 50)
+                            ELSE 
+                                similarity(c.search_text_normalized, unaccent(LOWER(?))) * 30
+                        END as relevance_score
+                    `,
+            [`%${normalizedQuery}%`, query, query, normalizedQuery]
+          )
+        );
+      }
+    }
+
+    if (catid) {
+      coursesQuery = coursesQuery.andWhere('c.catid', catid);
+      countQuery = countQuery.andWhere('c.catid', catid);
+    }
+
+    switch (sortBy) {
+      case 'relevance':
+        if (query && query.trim()) {
+          coursesQuery = coursesQuery.orderByRaw('relevance_score DESC, c.views DESC');
+        } else {
+          coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+        }
+        break;
+      case 'price_asc':
+        coursesQuery = coursesQuery.orderBy(db.raw('COALESCE(c.promo_price, c.price)'), 'asc');
+        break;
+      case 'rating':
+        coursesQuery = coursesQuery.orderBy([
+          { column: 'average_rating', order: 'desc', nulls: 'last' },
+          { column: 'rating_count', order: 'desc' },
+        ]);
+        break;
+      case 'popular':
+        coursesQuery = coursesQuery.orderBy('enrollment_count', 'desc');
+        break;
+      case 'newest':
+      default:
+        coursesQuery = coursesQuery.orderBy('c.last_updated', 'desc');
+        break;
+    }
+
+    const courses = await coursesQuery.limit(limit).offset(offset);
+    const [{ count }] = await countQuery.count('c.proid as count');
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    courses.forEach((course) => {
+      if (course.enrollment_count > 50) {
+        course.isBestseller = true;
+      }
+      if (new Date(course.last_updated) > thirtyDaysAgo) {
+        course.isNew = true;
+      }
+      if (course.average_rating) {
+        course.average_rating = parseFloat(parseFloat(course.average_rating).toFixed(1));
+      }
+    });
+
+    return {
+      courses,
+      pagination: {
+        page,
+        limit,
+        total: parseInt(count),
+        totalPages: Math.ceil(parseInt(count) / limit),
+      },
+    };
+  },
+
+  async searchSuggestions(query, limit = 5) {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+
+    const normalizedQuery = query.toLowerCase().trim();
+
+    const suggestions = await db('courses')
+      .where('is_disabled', false)
+      .where(function () {
+        this.whereRaw(`unaccent(LOWER(proname)) LIKE unaccent(LOWER(?))`, [
+          `%${normalizedQuery}%`,
+        ]).orWhereRaw(`similarity(search_text_normalized, unaccent(LOWER(?))) > 0.3`, [
+          normalizedQuery,
+        ]);
+      })
+      .select('proid', 'proname', 'thumbnail')
+      .orderByRaw(
+        `
+                CASE 
+                    WHEN unaccent(LOWER(proname)) LIKE unaccent(LOWER(?)) THEN 1
+                    ELSE 2
+                END
+            `,
+        [`${normalizedQuery}%`]
+      )
+      .orderBy('views', 'desc')
+      .limit(limit);
+
+    return suggestions;
+  },
+
+  async findByInstructor(instructorId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const courses = await _getBaseQuery()
+      .where('c.instructor_id', instructorId)
+      .select(
+        'c.proid',
+        'c.proname',
+        'c.tinydes',
+        'c.price',
+        'c.promo_price',
+        'c.last_updated',
+        'c.thumbnail',
+        'c.is_completed',
+        'cat.name as category_name',
+        'ratings.average_rating',
+        'ratings.rating_count',
+        'enrollments.enrollment_count'
+      )
+      .orderBy('c.last_updated', 'desc')
+      .limit(limit)
+      .offset(offset);
+
+    const [{ count }] = await db('courses')
+      .where('instructor_id', instructorId)
+      .count('proid as count');
+
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
+
+    return {
+      courses,
+      pagination: {
+        page,
+        limit,
+        total: parseInt(count),
+        totalPages: Math.ceil(parseInt(count) / limit),
+      },
+    };
+  },
+
+  async createByInstructor(courseData) {
+    const { instructor_id, proname, tinydes, fulldes, catid, price, promo_price, thumbnail } =
+      courseData;
+
+    const [course] = await db('courses')
+      .insert({
+        instructor_id,
+        proname,
+        tinydes,
+        fulldes,
+        catid,
+        price: parseFloat(price),
+        promo_price: promo_price ? parseFloat(promo_price) : null,
+        thumbnail: thumbnail || null,
+        views: 0,
+        is_disabled: false,
+        last_updated: db.fn.now(),
+      })
+      .returning('*');
+
+    return course;
+  },
+
+  async updateByInstructor(proid, instructorId, courseData) {
+    const course = await db('courses').where({ proid, instructor_id: instructorId }).first();
+
+    if (!course) {
+      throw new Error('Course not found or access denied');
+    }
+
+    const updateData = {
+      proname: courseData.proname,
+      tinydes: courseData.tinydes,
+      fulldes: courseData.fulldes,
+      catid: courseData.catid,
+      price: parseFloat(courseData.price),
+      last_updated: db.fn.now(),
+    };
+
+    if (courseData.promo_price) {
+      updateData.promo_price = parseFloat(courseData.promo_price);
+    }
+
+    if (courseData.thumbnail !== undefined) {
+      updateData.thumbnail = courseData.thumbnail;
+    }
+
+    const [updated] = await db('courses')
+      .where({ proid, instructor_id: instructorId })
+      .update(updateData)
+      .returning('*');
+
+    return updated;
+  },
+
+  async deleteByInstructor(proid, instructorId) {
+    const course = await db('courses').where({ proid, instructor_id: instructorId }).first();
+
+    if (!course) {
+      throw new Error('Course not found or access denied');
+    }
+
+    const [{ count: enrollCount }] = await db('enrollment')
+      .where('proid', proid)
+      .count('user_id as count');
+
+    if (parseInt(enrollCount) > 0) {
+      throw new Error(
+        'Cannot delete course with existing enrollments. You can disable it instead.'
+      );
+    }
+
+    await db('lessons').where('proid', proid).del();
+    await db('reviews').where('proid', proid).del();
+    await db('watchlist').where('proid', proid).del();
+
+    await db('courses').where({ proid, instructor_id: instructorId }).del();
+
+    return true;
+  },
+
+  async getInstructorStats(instructorId) {
+    const [{ count: totalCourses }] = await db('courses')
+      .where('instructor_id', instructorId)
+      .count('proid as count');
+
+    const [{ count: totalStudents }] = await db('enrollment')
+      .join('courses', 'enrollment.proid', 'courses.proid')
+      .where('courses.instructor_id', instructorId)
+      .countDistinct('enrollment.user_id as count');
+
+    const [{ count: totalReviews }] = await db('reviews')
+      .join('courses', 'reviews.proid', 'courses.proid')
+      .where('courses.instructor_id', instructorId)
+      .count('reviews.id as count');
+
+    const [{ avg: avgRating }] = await db('reviews')
+      .join('courses', 'reviews.proid', 'courses.proid')
+      .where('courses.instructor_id', instructorId)
+      .avg('reviews.rating as avg');
+
+    return {
+      totalCourses: parseInt(totalCourses),
+      totalStudents: parseInt(totalStudents),
+      totalReviews: parseInt(totalReviews),
+      averageRating: avgRating ? parseFloat(parseFloat(avgRating).toFixed(1)) : 0,
+    };
+  },
+
+  async updateCompletionStatus(proid, is_completed) {
+    const [updated] = await db('courses')
+      .where({ proid })
+      .update({
+        is_completed,
+        last_updated: db.fn.now(),
+      })
+      .returning('*');
+
+    return updated;
+  },
+};

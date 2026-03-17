@@ -1,5 +1,5 @@
 import db from '../ultis/db.js';
-import { getBaseQuery as _getBaseQuery } from './course.model.js';
+import { getBaseQuery as _getBaseQuery } from './course.repository.js';
 
 export default {
   async add(userId, proid) {
@@ -37,15 +37,15 @@ export default {
         'ratings.rating_count'
       )
       .orderBy('c.last_updated', 'desc');
-      courses.forEach(course => {
-        if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
-      });
+    courses.forEach((course) => {
+      if (course.average_rating) course.average_rating = parseFloat(course.average_rating);
+    });
 
-      return courses;
+    return courses;
   },
 
   async getCount(userId) {
     const [result] = await db('watchlist').where('user_id', userId).count('proid as count');
     return parseInt(result.count);
-  }
+  },
 };
