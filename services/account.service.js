@@ -1,8 +1,11 @@
 import userRepository from '../repositories/user.repository.js';
 import { sendMail } from '../ultis/emailService.js';
 import bcrypt from 'bcryptjs';
+import db from '../ultis/db.js';
 
 const SALT_ROUNDS = 10;
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_TIME = 15 * 60 * 1000; // 15 minutes
 
 export const AccountService = {
   async authenticateUser(username, password) {
@@ -14,10 +17,33 @@ export const AccountService = {
       throw new Error('Please verify your email before logging in.');
     }
 
+    // 1. Check if account is currently locked
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      throw new Error('Account temporarily locked due to too many failed attempts. Try again later.');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
+      // 2. Handle failed attempt
+      const attempts = (user.failed_login_attempts || 0) + 1;
+      const updateData = { failed_login_attempts: attempts };
+
+      if (attempts >= MAX_FAILED_ATTEMPTS) {
+        updateData.locked_until = new Date(Date.now() + LOCK_TIME);
+      }
+      
+      await db('users').where('id', user.id).update(updateData);
       throw new Error('Invalid username or password.');
     }
+
+    // 3. Reset failed attempts on successful login
+    if (user.failed_login_attempts > 0 || user.locked_until) {
+      await db('users').where('id', user.id).update({
+        failed_login_attempts: 0,
+        locked_until: null
+      });
+    }
+
     return user;
   },
 

@@ -1,4 +1,5 @@
 import { AccountService } from '../services/account.service.js';
+import { validatePassword } from '../ultis/passwordValidator.js';
 
 export const AccountController = {
   getSignin(req, res) {
@@ -10,19 +11,29 @@ export const AccountController = {
       const { username, password } = req.body;
       const user = await AccountService.authenticateUser(username, password);
 
-      req.session.isAuthenticated = true;
-      req.session.authUser = user;
+      // Save the return URL before session regeneration destroys it
+      const retUrl = req.session.retUrl;
 
-      req.session.save((err) => {
+      req.session.regenerate((err) => {
         if (err) {
-          console.error('Session save error:', err);
-          return res.render('vwAccount/signin', {
-            error_message: 'Login error. Please try again.',
-          });
+          console.error('Session regeneration error:', err);
+          return res.render('vwAccount/signin', { error_message: 'Login error. Please try again.' });
         }
-        const redirectUrl = req.session.retUrl || '/';
-        delete req.session.retUrl;
-        res.redirect(redirectUrl);
+
+        req.session.isAuthenticated = true;
+        req.session.authUser = user;
+        if (retUrl) req.session.retUrl = retUrl;
+
+        req.session.save((err) => {
+          if (err) {
+            console.error('Session save error:', err);
+            return res.render('vwAccount/signin', { error_message: 'Login error. Please try again.' });
+          }
+          
+          const redirectUrl = req.session.retUrl || '/';
+          delete req.session.retUrl;
+          res.redirect(redirectUrl);
+        });
       });
     } catch (error) {
       console.error(error);
@@ -39,6 +50,13 @@ export const AccountController = {
       if (req.validationErrors) {
         return res.render('vwAccount/signup', {
           error_message: req.validationErrors[0].msg,
+          formData: req.body,
+        });
+      }
+
+      if (!validatePassword(req.body.password)) {
+        return res.render('vwAccount/signup', {
+          error_message: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.',
           formData: req.body,
         });
       }
@@ -135,6 +153,13 @@ export const AccountController = {
 
       const userId = req.session.authUser.id;
       const { oldPassword, newPassword } = req.body;
+
+      if (!validatePassword(newPassword)) {
+        return res.render('vwAccount/profile', {
+          user: req.session.authUser,
+          error_message: 'New password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.',
+        });
+      }
 
       await AccountService.changePassword(userId, oldPassword, newPassword);
 

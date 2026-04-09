@@ -73,12 +73,37 @@ export default {
     return review;
   },
 
+  sanitizeComment(comment) {
+    if (!comment) return '';
+
+    // Trim whitespace and limit length to 1000 characters
+    let sanitized = String(comment).trim();
+    if (sanitized.length > 1000) {
+      sanitized = sanitized.substring(0, 1000);
+    }
+
+    // Aggressively strip javascript: protocols and inline event handlers
+    sanitized = sanitized.replace(/javascript\s*:/gi, '');
+    sanitized = sanitized.replace(/\bon[a-z]+\s*=/gi, '');
+
+    // Replace HTML characters with entity equivalents
+    return sanitized
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  },
+
   async createOrUpdate(userId, proid, rating, comment) {
     const enrollment = await db('enrollment').where({ user_id: userId, proid }).first();
 
     if (!enrollment) {
       throw new Error('You must be enrolled in this course to leave a review');
     }
+
+    const safeComment = this.sanitizeComment(comment);
 
     const existingReview = await db('reviews').where({ user_id: userId, proid }).first();
 
@@ -87,7 +112,7 @@ export default {
         .where({ user_id: userId, proid })
         .update({
           rating,
-          comment,
+          comment: safeComment,
           updated_at: db.fn.now(),
         })
         .returning('*');
@@ -99,7 +124,7 @@ export default {
           user_id: userId,
           proid,
           rating,
-          comment,
+          comment: safeComment,
         })
         .returning('*');
 

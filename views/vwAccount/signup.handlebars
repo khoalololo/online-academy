@@ -65,6 +65,15 @@
 {{#section 'js'}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    function validatePassword(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*]/.test(password);
+        return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+    }
+
     document.querySelector('#accountRegister').addEventListener('submit', handleSubmit);
 
     function handleSubmit(event) {
@@ -78,8 +87,8 @@
         if (!username) {
             return Swal.fire({ title: 'Error!', text: 'Username is required.', icon: 'error' });
         }
-        if (password.length < 6) {
-            return Swal.fire({ title: 'Error!', text: 'Password must be at least 6 characters long.', icon: 'error' });
+        if (!validatePassword(password)) {
+            return Swal.fire({ title: 'Error!', text: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.', icon: 'error' });
         }
         if (password !== confirm) {
             return Swal.fire({ title: 'Error!', text: 'Passwords do not match.', icon: 'error' });

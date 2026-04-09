@@ -208,10 +208,10 @@
                         name="newPassword" 
                         type="password" 
                         required 
-                        minlength="6"
+                        minlength="8"
                         class="block w-full px-4 py-2 rounded-lg border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="Enter new password (min. 6 characters)">
-                    <p class="mt-1 text-xs text-gray-500">Password must be at least 6 characters long</p>
+                        placeholder="Enter new password (min. 8 characters)">
+                    <p class="mt-1 text-xs text-gray-500">Password must be at least 8 characters, with upper/lowercase, numbers, and special chars.</p>
                 </div>
 
                 <div>
@@ -402,10 +402,31 @@
 
 {{#section 'js'}}
 <script>
+// Password strength validation
+function validatePassword(password) {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*]/.test(password);
+    return password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar;
+}
+
 // Password confirmation validation
 document.querySelector('form[action="/account/change-password"]').addEventListener('submit', function(e) {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (!validatePassword(newPassword)) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Error!',
+            text: 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.',
+            icon: 'error',
+            confirmButtonColor: '#4F46E5'
+        });
+        return;
+    }
 
     if (newPassword !== confirmPassword) {
         e.preventDefault();

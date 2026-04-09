@@ -8,12 +8,13 @@ import {
   handleValidationErrors,
 } from '../validations/account.validation.js';
 import authMdw from '../middlewares/auth.mdw.js';
+import { loginLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
 router.get('/signin', AccountController.getSignin);
 
-router.post('/signin', validateSignin, handleValidationErrors, AccountController.postSignin);
+router.post('/signin', loginLimiter, validateSignin, handleValidationErrors, AccountController.postSignin);
 
 router.get('/signup', AccountController.getSignup);
 
