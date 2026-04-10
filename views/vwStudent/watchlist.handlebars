@@ -112,7 +112,8 @@ async function removeFromWatchlist(proid) {
     try {
         const response = await fetch('/student/watchlist/remove', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken },  // Include CSRF token in the request header
             body: JSON.stringify({ proid })
         });
 

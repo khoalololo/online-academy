@@ -1,20 +1,45 @@
 import { UploadService } from '../services/upload.service.js';
+import { fileTypeFromBuffer } from 'file-type';
+import fs from 'fs';
+import path from 'path';
+
+async function validateAndSaveFile(buffer, folder) {
+  const type = await fileTypeFromBuffer(buffer);
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+  if (!type || !allowedMimes.includes(type.mime)) {
+    throw new Error('Invalid file content. Only real image files are allowed.');
+  }
+
+  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  const filename = 'avatar-' + uniqueSuffix + '.' + type.ext;
+  const uploadDir = path.join('static/uploads', folder);
+
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+  fs.writeFileSync(path.join(uploadDir, filename), buffer);
+
+  return filename;
+}
 
 export const UploadController = {
   async handleAvatarUpload(req, res, next) {
+    console.log('req.file:', req.file);
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, message: 'No file uploaded' });
       }
-
+      const filename = await validateAndSaveFile(req.file.buffer, 'avatars');
       const userId = req.session.authUser.id;
-      const avatarPath = await UploadService.handleAvatarUpload(userId, req.file.filename);
+      const avatarPath = await UploadService.handleAvatarUpload(userId, filename);
 
       req.session.authUser.avatar = avatarPath;
 
       res.json({ success: true, message: 'Avatar uploaded successfully', avatarPath });
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      if (error.message.includes('Invalid file content')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
+
       res.status(500).json({ success: false, message: error.message });
     }
   },
@@ -41,17 +66,19 @@ export const UploadController = {
       if (!courseId) {
         return res.status(400).json({ success: false, message: 'Course ID is required' });
       }
-
+      const filename = await validateAndSaveFile(req.file.buffer, 'courses');
       const instructorId = req.session.authUser.id;
       const thumbnailPath = await UploadService.handleCourseThumbnailUpload(
         courseId,
         instructorId,
-        req.file.filename
+        filename
       );
 
       res.json({ success: true, message: 'Thumbnail uploaded successfully', thumbnailPath });
     } catch (error) {
-      console.error('Thumbnail upload error:', error);
+      if (error.message.includes('Invalid file content')) {
+        return res.status(400).json({ success: false, message: error.message });
+      }
       res
         .status(error.message === 'Access denied' ? 403 : 500)
         .json({ success: false, message: error.message });

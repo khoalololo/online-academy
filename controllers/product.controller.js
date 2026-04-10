@@ -94,9 +94,16 @@ export const ProductController = {
         sortBy: sortBy,
       };
 
-      // VULNERABILITY PRESERVED: Reflected XSS in title payload via searchQuery
+      // Escape HTML entities to prevent XSS
+      const escapeHtml = (str) => str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+
       res.render('vwProduct/search', {
-        title: `Search results for "${searchQuery}"`,
+        title: `Search results for "${escapeHtml(searchQuery)}"`,
         courses: result.courses,
         allCategories,
         searchParams,

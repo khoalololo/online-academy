@@ -1,7 +1,7 @@
 import userRepository from '../repositories/user.repository.js';
 import { sendMail } from '../ultis/emailService.js';
 import bcrypt from 'bcryptjs';
-
+import crypto from 'crypto';
 const SALT_ROUNDS = 10;
 
 export const AccountService = {
@@ -31,7 +31,7 @@ export const AccountService = {
       throw new Error('Username already exists.');
     }
 
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 999999).toString();
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await sendMail({

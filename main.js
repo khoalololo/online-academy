@@ -4,6 +4,8 @@ import session from 'express-session';
 import path from 'path';
 import sections from 'express-handlebars-sections'; 
 import moment from 'moment';
+import csrf from 'csrf';           
+const tokens = new csrf();       // CSRF token generator and verifier 
 // --- Model Imports ---
 import categoryModel from './repositories/category.repository.js';
 import courseModel from './repositories/course.repository.js';
@@ -45,8 +47,40 @@ app.use(session({
   secret: 'your-secret-key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } 
+  cookie: { secure: false ,
+    maxAge: 24 * 60 * 60 * 1000
+  }
 }));
+
+// CSRF Token middleware
+app.use((req, res, next) => {
+  if (!req.session.csrfSecret) {
+    req.session.csrfSecret = tokens.secretSync();
+  }
+  res.locals.csrfToken = tokens.create(req.session.csrfSecret);
+  next();
+});
+
+// Verify CSRF token on state-changing requests
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+
+    // Bỏ qua các route không cần CSRF (chưa có session)python attack.py
+    const excluded = ['/account/signin', '/account/signup', '/account/verify-otp', '/upload/avatar', '/upload/course-thumbnail'];
+    if (excluded.includes(req.path)) {
+      return next();
+    }
+
+    const token = req.body._csrf || req.headers['x-csrf-token'];
+    if (!tokens.verify(req.session.csrfSecret, token)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid CSRF token'
+      });
+    }
+  }
+  next();
+});
 
 app.engine('handlebars', engine({
   defaultLayout: 'main',

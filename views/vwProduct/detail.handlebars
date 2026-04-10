@@ -602,7 +602,8 @@ async function enrollCourse(proid) {
     try {
         const response = await fetch(`/student/enroll/${proid}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken }  // Include CSRF token in the request header
         });
 
         const data = await response.json();
@@ -638,7 +639,8 @@ async function addToWatchlist(proid) {
     try {
         const response = await fetch(`/student/watchlist/add`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json',
+            'x-csrf-token': csrfToken },  // Include CSRF token in the request header
             body: JSON.stringify({ proid })
         });
 
@@ -780,7 +782,8 @@ if (stars.length > 0) {
       try {
         const response = await fetch(`/student/review/{{course.proid}}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken },  // Include CSRF token in the request header
           body: JSON.stringify({ rating, comment })
         });
 
