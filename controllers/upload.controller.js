@@ -12,7 +12,8 @@ async function validateAndSaveFile(buffer, folder) {
   }
 
   const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-  const filename = 'avatar-' + uniqueSuffix + '.' + type.ext;
+  const prefix = folder === 'avatars' ? 'avatar' : 'thumbnail';
+  const filename = prefix + '-' + uniqueSuffix + '.' + type.ext;
   const uploadDir = path.join('static/uploads', folder);
 
   if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });

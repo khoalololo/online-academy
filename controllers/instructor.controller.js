@@ -1,6 +1,7 @@
 import { InstructorService } from '../services/instructor.service.js';
 import fs from 'fs';
 import path from 'path';
+import { fileTypeFromFile } from 'file-type';
 
 export const InstructorController = {
   async getDashboard(req, res, next) {
@@ -253,7 +254,27 @@ export const InstructorController = {
         return res.status(400).json({ success: false, message: 'No video file uploaded' });
       }
 
-      const videoPath = `/static/uploads/videos/${req.file.filename}`;
+      const filePath = path.join(process.cwd(), 'static/uploads/videos', req.file.filename);
+
+      // Inspect the magic bytes of the file on disk
+      const type = await fileTypeFromFile(filePath);
+      const allowedMimes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+
+      if (!type || !allowedMimes.includes(type.mime)) {
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        return res.status(400).json({ success: false, message: 'Invalid file format. Only real video files are allowed.' });
+      }
+
+      // Enforce a safe extension based on the actual file content
+      const safeFilename = path.parse(req.file.filename).name + '.' + type.ext;
+      const safeFilePath = path.join(process.cwd(), 'static/uploads/videos', safeFilename);
+
+      if (filePath !== safeFilePath) {
+        fs.renameSync(filePath, safeFilePath);
+        req.file.filename = safeFilename; // Update so the catch block unlinks the renamed file on error
+      }
+
+      const videoPath = `/static/uploads/videos/${safeFilename}`;
       res.json({ success: true, message: 'Video uploaded successfully', videoUrl: videoPath });
     } catch (error) {
       if (req.file) {

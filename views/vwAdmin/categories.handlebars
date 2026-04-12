@@ -333,7 +333,10 @@ document.getElementById('categoryForm').addEventListener('submit', async (e) => 
     try {
         const response = await fetch(url, {
             method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}'
+            },
             body: JSON.stringify({ name, parent_id })
         });
 
@@ -398,7 +401,10 @@ async function deleteCategory(id, name, courseCount, subCount) {
 
     try {
         const response = await fetch(`/admin/categories/${id}/delete`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();

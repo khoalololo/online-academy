@@ -444,8 +444,12 @@ async function toggleLessonComplete(button) {
         : `/student/lessons/${lessonId}/complete`;
 
     try {
-        const resp = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json',
-        'x-csrf-token': csrfToken } // Include CSRF token in the request header
+        const resp = await fetch(endpoint, { 
+            method: 'POST', 
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}' 
+            }
         });
         const data = await resp.json();
 
@@ -491,7 +495,10 @@ async function completeCourse() {
     try {
         const response = await fetch(`/student/learn/{{course.proid}}/complete`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}' 
+            }
         });
         const data = await response.json();
 

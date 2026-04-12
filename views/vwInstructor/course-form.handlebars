@@ -29,7 +29,9 @@
     {{/if}}
 
     <!-- Course Form -->
-    <form method="POST" action="{{#if isEdit}}/instructor/courses/{{course.proid}}/edit{{else}}/instructor/courses/create{{/if}}" id="courseForm" class="bg-white rounded-xl shadow-md overflow-hidden" enctype="multipart/form-data">        <div class="p-6 border-b border-gray-200">
+    <form method="POST" action="{{#if isEdit}}/instructor/courses/{{course.proid}}/edit{{else}}/instructor/courses/create{{/if}}" id="courseForm" class="bg-white rounded-xl shadow-md overflow-hidden">
+        <input type="hidden" name="_csrf" value="{{csrfToken}}">
+        <div class="p-6 border-b border-gray-200">
             <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -225,7 +227,34 @@ tinymce.init({
     plugins: 'link image media table code lists',
     toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
     automatic_uploads: true,
-    images_upload_url: '/instructor/upload-image',
+    images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/instructor/upload-image');
+        xhr.setRequestHeader('x-csrf-token', '{{csrfToken}}');
+        
+        xhr.upload.onprogress = (e) => {
+            progress(e.loaded / e.total * 100);
+        };
+        
+        xhr.onload = () => {
+            if (xhr.status === 403) {
+                reject({ message: 'HTTP Error: ' + xhr.status, remove: true });
+                return;
+            }
+            if (xhr.status < 200 || xhr.status >= 300) {
+                reject('HTTP Error: ' + xhr.status);
+                return;
+            }
+            const json = JSON.parse(xhr.responseText);
+            resolve(json.location);
+        };
+        
+        xhr.onerror = () => reject('Image upload failed due to an XHR error.');
+        
+        const formData = new FormData();
+        formData.append('file', blobInfo.blob(), blobInfo.filename());
+        xhr.send(formData);
+    }),
     file_picker_types: 'image',
     file_picker_callback: (cb, v, meta) => {
         const input = document.createElement('input');
@@ -376,7 +405,10 @@ async function deleteThumbnail() {
 
     try {
         const response = await fetch('/upload/course-thumbnail/{{course.proid}}', {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();

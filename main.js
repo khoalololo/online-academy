@@ -93,7 +93,7 @@ app.use((req, res, next) => {
       return next();
     }
 
-    const token = req.body._csrf || req.headers['x-csrf-token'];
+    const token = req.body?._csrf || req.headers['x-csrf-token'];
     if (!tokens.verify(req.session.csrfSecret, token)) {
       return res.status(403).json({
         success: false,
