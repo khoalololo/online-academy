@@ -70,7 +70,6 @@ export const StudentService = {
     if (!rating || rating < 1 || rating > 5) {
       throw new Error('Rating must be between 1 and 5');
     }
-    // Preserved VULNERABILITY: Stored XSS - comment is not cleansed or escaped here
     return await reviewModel.createOrUpdate(userId, proid, rating, comment);
   },
 

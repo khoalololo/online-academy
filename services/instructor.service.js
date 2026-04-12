@@ -22,7 +22,7 @@ export const InstructorService = {
       instructor_id: instructorId,
       proname: courseData.proname,
       tinydes: courseData.tinydes,
-      fulldes: courseData.fulldes, // Intentionally unescaped as per original
+      fulldes: courseData.fulldes,
       catid: parseInt(courseData.catid),
       price: parseFloat(courseData.price),
       promo_price: courseData.promo_price ? parseFloat(courseData.promo_price) : null,
@@ -46,7 +46,7 @@ export const InstructorService = {
     const data = {
       proname: courseData.proname,
       tinydes: courseData.tinydes,
-      fulldes: courseData.fulldes, // Unescaped logic remains
+      fulldes: courseData.fulldes,
       catid: parseInt(courseData.catid),
       price: parseFloat(courseData.price),
       promo_price: courseData.promo_price ? parseFloat(courseData.promo_price) : null,

@@ -133,7 +133,6 @@ export const ProductController = {
         return res.status(404).render('404', { layout: false });
       }
 
-      // VULNERABILITY PRESERVED: Stored XSS via unescaped course.fulldes
       res.render('vwProduct/detail', {
         title: details.course.proname,
         course: details.course,
