@@ -44,8 +44,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.urlencoded({ extended: true, limit: '990mb' })); 
-app.use(express.json({ limit: '110mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); 
+app.use(express.json({ limit: '10mb' }));
 app.use('/static', express.static('static', {
   maxAge: '1d', // Cache static files for 1 day
   setHeaders: (res, path) => {
