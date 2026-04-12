@@ -249,7 +249,10 @@ async function toggleCourseStatus(proid, isDisabled) {
     try {
         const response = await fetch(`/admin/courses/${proid}/toggle-disable`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();
@@ -313,7 +316,10 @@ async function deleteCourse(proid, courseName) {
 
     try {
         const response = await fetch(`/admin/courses/${proid}/delete`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();

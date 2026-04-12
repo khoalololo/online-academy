@@ -287,7 +287,10 @@ document.getElementById('instructorForm').addEventListener('submit', async (e) =
     try {
         const response = await fetch('/admin/users/create-instructor', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}'
+            },
             body: JSON.stringify(data)
         });
 
@@ -341,7 +344,10 @@ async function changeUserRole(userId, userName, currentRole) {
     try {
         const response = await fetch(`/admin/users/${userId}/update-role`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}'
+            },
             body: JSON.stringify({ permission_level: newRole })
         });
 
@@ -386,7 +392,10 @@ async function toggleVerification(userId, isVerified) {
 
     try {
         const response = await fetch(`/admin/users/${userId}/toggle-verification`, {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();
@@ -429,7 +438,10 @@ async function deleteUser(userId, userName) {
 
     try {
         const response = await fetch(`/admin/users/${userId}/delete`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();

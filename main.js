@@ -87,8 +87,8 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
 
-    // Bỏ qua các route không cần CSRF (chưa có session)python attack.py
-    const excluded = ['/account/signin', '/account/signup', '/account/verify-otp', '/upload/avatar', '/upload/course-thumbnail'];
+    // Bỏ qua các route không cần CSRF (chưa có session)
+    const excluded = ['/account/signin', '/account/signup', '/account/verify-otp'];
     if (excluded.includes(req.path)) {
       return next();
     }

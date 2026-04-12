@@ -190,7 +190,10 @@ async function deleteCourse(proid, courseName) {
     try {
         const response = await fetch(`/instructor/courses/${proid}/delete`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'x-csrf-token': '{{csrfToken}}'
+            }
         });
 
         const data = await response.json();

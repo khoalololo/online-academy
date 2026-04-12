@@ -360,6 +360,9 @@ async function uploadThumbnailNow(input) {
     try {
         const response = await fetch('/upload/course-thumbnail', {
             method: 'POST',
+            headers: {
+                'x-csrf-token': '{{csrfToken}}'
+            },
             body: formData
         });
 
