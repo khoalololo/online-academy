@@ -7,12 +7,13 @@ export const UploadService = {
     const avatarPath = `/static/uploads/avatars/${filename}`;
     const user = await db('users').where('id', userId).first();
 
-    // VULNERABILITY PRESERVED: Mass-assignment arbitrary file deletion
-
     if (user.avatar && user.avatar !== avatarPath) {
-      const oldPath = path.join(process.cwd(), user.avatar);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
+      const allowedBase = path.resolve(process.cwd(), 'static', 'uploads');
+      const oldPath = path.resolve(process.cwd(), user.avatar.replace(/^\//, ''));
+      if (oldPath.startsWith(allowedBase + path.sep)) {
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
       }
     }
 
@@ -23,11 +24,13 @@ export const UploadService = {
   async handleAvatarDelete(userId) {
     const user = await db('users').where('id', userId).first();
 
-    // VULNERABILITY PRESERVED: Same as above.
     if (user.avatar) {
-      const fullPath = path.join(process.cwd(), user.avatar);
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
+      const allowedBase = path.resolve(process.cwd(), 'static', 'uploads');
+      const fullPath = path.resolve(process.cwd(), user.avatar.replace(/^\//, ''));
+      if (fullPath.startsWith(allowedBase + path.sep)) {
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
       }
     }
 
@@ -62,9 +65,12 @@ export const UploadService = {
     }
 
     if (course.thumbnail) {
-      const fullPath = path.join(process.cwd(), course.thumbnail);
-      if (fs.existsSync(fullPath)) {
-        fs.unlinkSync(fullPath);
+      const allowedBase = path.resolve(process.cwd(), 'static', 'uploads');
+      const fullPath = path.resolve(process.cwd(), course.thumbnail.replace(/^\//, ''));
+      if (fullPath.startsWith(allowedBase + path.sep)) {
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
       }
     }
 
@@ -73,9 +79,10 @@ export const UploadService = {
   },
 
   async deleteImage(imagePath) {
-    // VULNERABILITY PRESERVED: Weak path traversal check
-    const fullPath = path.join(process.cwd(), imagePath);
-    if (!fullPath.includes('static\\uploads') && !fullPath.includes('static/uploads')) {
+    const allowedBase = path.resolve(process.cwd(), 'static', 'uploads');
+    const fullPath = path.resolve(process.cwd(), imagePath.replace(/^\//, ''));
+
+    if (!fullPath.startsWith(allowedBase + path.sep) && fullPath !== allowedBase) {
       throw new Error('Invalid image path');
     }
 
