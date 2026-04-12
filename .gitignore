@@ -30,3 +30,6 @@ coverage/
 *.temp
 tmp/
 temp/
+
+# Ignore user uploaded files
+static/uploads/
