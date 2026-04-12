@@ -1,4 +1,9 @@
 import db from '../ultis/db.js';
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
+
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
 
 const _getRatingSubquery = () => {
   return db('reviews')
@@ -433,16 +438,35 @@ export default {
     };
   },
 
+  sanitizeText(text) {
+    if (!text) return text;
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
+  },
+
   async createByInstructor(courseData) {
     const { instructor_id, proname, tinydes, fulldes, catid, price, promo_price, thumbnail } =
       courseData;
 
+    const sanitizedProname = this.sanitizeText(proname);
+    const sanitizedTinydes = this.sanitizeText(tinydes);
+    const sanitizedFulldes = purify.sanitize(fulldes, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'span'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'width', 'height', 'style', 'class'],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/|\/|mailto:|tel:)/i // Allows local relative urls alongside standard external links
+    });
+
     const [course] = await db('courses')
       .insert({
         instructor_id,
-        proname,
-        tinydes,
-        fulldes,
+        proname: sanitizedProname,
+        tinydes: sanitizedTinydes,
+        fulldes: sanitizedFulldes,
         catid,
         price: parseFloat(price),
         promo_price: promo_price ? parseFloat(promo_price) : null,
@@ -463,10 +487,18 @@ export default {
       throw new Error('Course not found or access denied');
     }
 
+    const sanitizedProname = courseData.proname ? this.sanitizeText(courseData.proname) : course.proname;
+    const sanitizedTinydes = courseData.tinydes ? this.sanitizeText(courseData.tinydes) : course.tinydes;
+    const sanitizedFulldes = courseData.fulldes ? purify.sanitize(courseData.fulldes, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'img', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'span'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'src', 'alt', 'width', 'height', 'style', 'class'],
+      ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/|\/|mailto:|tel:)/i
+    }) : course.fulldes;
+
     const updateData = {
-      proname: courseData.proname,
-      tinydes: courseData.tinydes,
-      fulldes: courseData.fulldes,
+      proname: sanitizedProname,
+      tinydes: sanitizedTinydes,
+      fulldes: sanitizedFulldes,
       catid: courseData.catid,
       price: parseFloat(courseData.price),
       last_updated: db.fn.now(),

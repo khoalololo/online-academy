@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'crypto'
 import { engine } from 'express-handlebars';
 import session from 'express-session';
 import path from 'path';
@@ -24,6 +25,25 @@ const app = express();
 
 // --- Middleware Setup ---
 app.set('trust proxy', 1);
+
+// Content Security Policy (CSP)
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.tiny.cloud https://cdn.plyr.io https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.plyr.io https://cdn.jsdelivr.net; " +
+        "img-src 'self' data: https: blob:; " +
+        "font-src 'self' data: https://fonts.gstatic.com; " +
+        "connect-src 'self' https://*.tiny.cloud; " +
+    "frame-src 'self' https://www.youtube.com https://player.vimeo.com; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self';"
+  );
+  next();
+});
+
 app.use(express.urlencoded({ extended: true, limit: '990mb' })); 
 app.use(express.json({ limit: '110mb' }));
 app.use('/static', express.static('static', {
@@ -44,15 +64,17 @@ app.use('/static', express.static('static', {
   }
 }));
 app.use(session({
-  secret: 'your-secret-key',
+  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'), // Dynamic/Hidden secret
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false ,
-    maxAge: 24 * 60 * 60 * 1000
-  }
+    cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,        // Prevent client-side JavaScript from accessing the cookie
+    sameSite: 'strict',    // Block CSRF attacks
+    maxAge: 60 * 60 * 1000 // 1 hour
+  } 
 }));
 
-// CSRF Token middleware
 app.use((req, res, next) => {
   if (!req.session.csrfSecret) {
     req.session.csrfSecret = tokens.secretSync();
