@@ -8,11 +8,11 @@ pg.defaults.ssl = process.env.NODE_ENV === 'production'
 const db = knex({
   client: 'pg',
   connection: process.env.DATABASE_URL || {
-    host: 'aws-1-ap-southeast-1.pooler.supabase.com',
-    port: 5432,
-    user: 'postgres.zrnspwcrbsopkmbalnel',
-    password: '1789',
-    database: 'postgres'
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'postgres'
   },
   pool: { min: 0, max: 15 }
 });

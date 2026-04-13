@@ -10,8 +10,8 @@ export const validateSignup = [
     .withMessage('Username must be between 3 and 30 characters'),
   body('email').isEmail().withMessage('Valid email is required').normalizeEmail(),
   body('password')
-    .isLength({ min: 6, max: 72 })
-    .withMessage('Password must be between 6 and 72 characters long'),
+    .isLength({ min: 8, max: 72 })
+    .withMessage('Password must be at least 8 characters long'),
   body('confirmPassword').custom((value, { req }) => {
     if (value !== req.body.password) {
       throw new Error('Passwords do not match');
@@ -36,7 +36,7 @@ export const validateProfileUpdate = [
 
 export const validateChangePassword = [
   body('oldPassword').isString().notEmpty().withMessage('Old password is required'),
-  body('newPassword').isLength({ min: 6, max: 72 }).withMessage('New password must be between 6 and 72 characters long')
+  body('newPassword').isLength({ min: 8, max: 72 }).withMessage('New password must be at least 8 characters long')
 ];
 
 export const handleValidationErrors = (req, res, next) => {
