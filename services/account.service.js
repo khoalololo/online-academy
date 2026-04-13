@@ -71,11 +71,13 @@ export const AccountService = {
       `,
     });
 
+    const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
+
     return {
       username,
       email,
       name,
-      password,
+      password_hash,
       dob,
       otpCode,
       otpExpiresAt: otpExpiresAt.toISOString(),
@@ -93,15 +95,12 @@ export const AccountService = {
       throw new Error('OTP code has expired. Please sign up again.');
     }
 
-    return await userRepository.create({
+    return await userRepository.createVerified({
       username: pendingSignup.username,
-      password: pendingSignup.password,
+      password_hash: pendingSignup.password_hash,
       name: pendingSignup.name,
       email: pendingSignup.email,
       dob: pendingSignup.dob,
-      is_verified: true,
-      otp_code: null,
-      otp_expires_at: null,
     });
   },
 

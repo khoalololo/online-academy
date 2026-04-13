@@ -8,7 +8,7 @@ import {
   handleValidationErrors,
 } from '../validations/account.validation.js';
 import authMdw from '../middlewares/auth.mdw.js';
-import { loginLimiter } from '../middlewares/rateLimiter.js';
+import { loginLimiter, otpLimiter } from '../middlewares/rateLimiter.js';
 
 const router = express.Router();
 
@@ -22,7 +22,7 @@ router.post('/signup', validateSignup, handleValidationErrors, AccountController
 
 router.get('/verify-otp', AccountController.getVerifyOtp);
 
-router.post('/verify-otp', AccountController.postVerifyOtp);
+router.post('/verify-otp', otpLimiter, AccountController.postVerifyOtp);
 
 router.get('/is-available', AccountController.checkAvailability);
 

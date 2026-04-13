@@ -1,5 +1,6 @@
 import { AccountService } from '../services/account.service.js';
 import { validatePassword } from '../ultis/passwordValidator.js';
+import { matchedData } from 'express-validator';
 
 export const AccountController = {
   getSignin(req, res) {
@@ -13,17 +14,14 @@ export const AccountController = {
 
       // Save the return URL before session regeneration destroys it
       const retUrl = req.session.retUrl;
-
       req.session.regenerate((err) => {
         if (err) {
           console.error('Session regeneration error:', err);
           return res.render('vwAccount/signin', { error_message: 'Login error. Please try again.' });
         }
-
         req.session.isAuthenticated = true;
         req.session.authUser = user;
         if (retUrl) req.session.retUrl = retUrl;
-
         req.session.save((err) => {
           if (err) {
             console.error('Session save error:', err);
@@ -125,7 +123,10 @@ export const AccountController = {
       }
 
       const userId = req.session.authUser.id;
-      const updatedUser = await AccountService.updateProfile(userId, req.body);
+      
+      // Prevent Mass Assignment by strictly using validated fields
+      const safeData = matchedData(req, { locations: ['body'] });
+      const updatedUser = await AccountService.updateProfile(userId, safeData);
 
       req.session.authUser = updatedUser;
 

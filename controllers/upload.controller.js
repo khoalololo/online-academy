@@ -99,21 +99,4 @@ export const UploadController = {
         .json({ success: false, message: error.message });
     }
   },
-
-  async deleteImage(req, res, next) {
-    try {
-      const { imagePath } = req.body;
-      if (!imagePath) {
-        return res.status(400).json({ success: false, message: 'Image path is required' });
-      }
-
-      await UploadService.deleteImage(imagePath);
-      res.json({ success: true, message: 'Image deleted successfully' });
-    } catch (error) {
-      console.error('Image deletion error:', error);
-      res
-        .status(error.message === 'Invalid image path' ? 403 : 500)
-        .json({ success: false, message: error.message });
-    }
-  },
 };

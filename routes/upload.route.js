@@ -36,6 +36,5 @@ router.delete(
   authMdw.isInstructor,
   UploadController.handleCourseThumbnailDelete
 );
-router.delete('/image', authMdw.isAuthenticated, UploadController.deleteImage);
 
 export default router;

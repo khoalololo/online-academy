@@ -94,16 +94,8 @@ export const ProductController = {
         sortBy: sortBy,
       };
 
-      // Escape HTML entities to prevent XSS
-      const escapeHtml = (str) => str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#x27;');
-
       res.render('vwProduct/search', {
-        title: `Search results for "${escapeHtml(searchQuery)}"`,
+        title: `Search results for "${searchQuery}"`,
         courses: result.courses,
         allCategories,
         searchParams,
