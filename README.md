@@ -165,6 +165,39 @@ npm install
 ```
 
 
+### Environment variables (.env)
+
+The application expects a `.env` file at the project root with environment-specific secrets and configuration. Create a `.env` file before running the app. Example variables:
+
+```env
+# Server
+PORT=3000
+SESSION_SECRET=your_session_secret_here
+
+# Database (if using local Postgres)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_db_password
+DB_NAME=postgres
+
+# SMTP (for sending OTP emails)
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_user
+SMTP_PASS=your_smtp_password
+
+# Optional: Supabase
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-key
+```
+
+ 
+Notes:
+
+* Never commit `.env` to version control. Add it to `.gitignore`.
+* Adjust variable names if your environment or `ultis/db.js` expects different keys.
+
 ### 3. Run the Application
 
 ```bash
